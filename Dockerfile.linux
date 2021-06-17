@@ -1,0 +1,457 @@
+ARG           FROM_IMAGE_BUILDER=dubodubonduponey/base@sha256:b51f084380bc1bd2b665840317b6f19ccc844ee2fc7e700bf8633d95deba2819
+ARG           FROM_IMAGE_RUNTIME=scratch
+
+#######################
+# A cross compiling base meant for CGO linux
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-cross
+
+# XXX port this to the base builder image
+SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
+
+RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
+              --mount=type=secret,id=CERTIFICATE \
+              --mount=type=secret,id=KEY \
+              --mount=type=secret,id=PASSPHRASE \
+              --mount=type=secret,mode=0444,id=GPG.gpg \
+              --mount=type=secret,id=NETRC \
+              --mount=type=secret,id=APT_SOURCES \
+              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              dpkg --add-architecture "$DEB_TARGET_ARCH"; \
+              apt-get update -qq && apt-get install -qq --no-install-recommends \
+                crossbuild-essential-"$DEB_TARGET_ARCH"=12.9 && \
+              rm -rf /var/lib/apt/lists/*
+
+
+###################################################################
+# Buildctl
+###################################################################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS builder-buildctl
+
+# Master as of June 9
+ARG           GIT_REPO=github.com/moby/buildkit
+ARG           GIT_VERSION=0f9f55f
+ARG           GIT_COMMIT=0f9f55ff7ce061b1a089681cdc889c564bf9749b
+
+ARG           GO_BUILD_SOURCE="./cmd/buildctl"
+ARG           GO_BUILD_OUTPUT="buildctl"
+ARG           GO_LD_FLAGS="-s -w -extldflags -static -X $GIT_REPO/version.Version=$GIT_VERSION -X $GIT_REPO/version.Revision=$GIT_COMMIT -X $GIT_REPO/version.Package=$GIT_REPO"
+ARG           GO_TAGS="netcgo cgo osusergo static_build"
+ARG           CGO_ENABLED=1
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
+              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
+              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+###################################################################
+# Cuelang
+###################################################################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS builder-cuelang
+
+ARG           GIT_REPO=github.com/cuelang/cue
+ARG           GIT_VERSION=v0.4.0
+ARG           GIT_COMMIT=3b0a537a2db6d49d1ae67631a31c45ad97c69078
+
+ARG           GO_BUILD_SOURCE="./cmd/cue"
+ARG           GO_BUILD_OUTPUT="cue"
+ARG           GO_LD_FLAGS="-s -w -extldflags -static -X cuelang.org/go/cmd/cue/cmd.version=$GIT_VERSION"
+ARG           GO_TAGS="netcgo cgo osusergo static_build"
+ARG           CGO_ENABLED=1
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
+              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
+              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+###################################################################
+# Dagger
+###################################################################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS builder-dagger
+
+ARG           GIT_REPO=github.com/dagger/dagger
+ARG           GIT_VERSION=v0.1.0-alpha12
+ARG           GIT_COMMIT=b805d37cb0c6314d330a389134b37e554485b42b
+
+ARG           GO_BUILD_SOURCE="./cmd/dagger"
+ARG           GO_BUILD_OUTPUT="dagger"
+ARG           GO_LD_FLAGS="-s -w -extldflags -static"
+ARG           GO_TAGS="netcgo cgo osusergo static_build"
+ARG           CGO_ENABLED=1
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
+              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
+              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+###################################################################
+# Docker cli
+###################################################################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS builder-docker
+
+ARG           GIT_REPO=github.com/docker/cli
+ARG           GIT_VERSION=v20.10.7
+ARG           GIT_COMMIT=f0df35096d5f5e6b559b42c7fde6c65a2909f7c5
+
+ARG           GO_BUILD_SOURCE="./cmd/docker"
+ARG           GO_BUILD_OUTPUT="docker"
+ARG           GO_LD_FLAGS="-s -w"
+ARG           GO_TAGS="netcgo cgo osusergo pkcs11"
+ARG           CGO_ENABLED=1
+ARG           GO111MODULE=auto
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
+              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
+              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+
+###################################################################
+# Docker cli
+###################################################################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS builder-terraform
+
+ARG           GIT_REPO=github.com/hashicorp/terraform
+ARG           GIT_VERSION=v1.0.0
+ARG           GIT_COMMIT=b99f7beaad41a3290330621897e244030d020504
+
+ARG           GO_BUILD_SOURCE="./"
+ARG           GO_BUILD_OUTPUT="terraform"
+ARG           GO_LD_FLAGS="-s -w"
+ARG           GO_TAGS="netcgo cgo osusergo"
+ARG           CGO_ENABLED=1
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
+              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
+              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+#######################
+# Extra builder for healthchecker
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-healthcheck-http
+
+ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
+ARG           GIT_COMMIT=51ebf8ca3d255e0c846307bf72740f731e6210c3
+ARG           GO_BUILD_SOURCE=./cmd/http
+ARG           GO_BUILD_OUTPUT=http-health
+ARG           GO_LD_FLAGS="-s -w"
+ARG           GO_TAGS="netgo osusergo"
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+#######################
+# Extra builder for healthchecker
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-healthcheck-rtsp
+
+ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
+ARG           GIT_COMMIT=51ebf8ca3d255e0c846307bf72740f731e6210c3
+ARG           GO_BUILD_SOURCE=./cmd/rtsp
+ARG           GO_BUILD_OUTPUT=rtsp-health
+ARG           GO_LD_FLAGS="-s -w"
+ARG           GO_TAGS="netgo osusergo"
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+#######################
+# Extra builder for healthchecker
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-healthcheck-dns
+
+ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
+ARG           GIT_COMMIT=51ebf8ca3d255e0c846307bf72740f731e6210c3
+ARG           GO_BUILD_SOURCE=./cmd/dns
+ARG           GO_BUILD_OUTPUT=dns-health
+ARG           GO_LD_FLAGS="-s -w"
+ARG           GO_TAGS="netgo osusergo"
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+#######################
+# Goello
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-goello-client
+
+ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
+ARG           GIT_VERSION=275a1eb
+ARG           GIT_COMMIT=275a1eb5f3fc21bb4a8e8e14e8fbf45d237bbc97
+ARG           GO_BUILD_SOURCE=./cmd/client
+ARG           GO_BUILD_OUTPUT=goello-client
+ARG           GO_LD_FLAGS="-s -w"
+ARG           GO_TAGS="netgo osusergo"
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+#######################
+# Goello
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-goello-server
+
+# Latest as of June 9 2021
+ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
+ARG           GIT_VERSION=275a1eb
+ARG           GIT_COMMIT=275a1eb5f3fc21bb4a8e8e14e8fbf45d237bbc97
+ARG           GO_BUILD_SOURCE=./cmd/server
+ARG           GO_BUILD_OUTPUT=goello-server
+ARG           GO_LD_FLAGS="-s -w"
+ARG           GO_TAGS="netgo osusergo"
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+#######################
+# Caddy
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-caddy
+
+# This is 2.4.0
+ARG           GIT_REPO=github.com/caddyserver/caddy
+ARG           GIT_VERSION=v2.4.0
+ARG           GIT_COMMIT=bc2210247861340c644d9825ac2b2860f8c6e12a
+ARG           GO_BUILD_SOURCE=./cmd/caddy
+ARG           GO_BUILD_OUTPUT=caddy
+ARG           GO_LD_FLAGS="-s -w"
+ARG           GO_TAGS="netgo osusergo"
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
+# hadolint ignore=SC2046
+RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+
+
+#######################
+# Hadolint
+#######################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS builder-hadolint
+
+ARG           GIT_REPO=github.com/hadolint/hadolint
+ARG           GIT_VERSION=v2.5.0
+ARG           GIT_COMMIT=d824e9d0714b618858abb6ba2959d4c258a7c4e2
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+
+RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
+              --mount=type=secret,id=CERTIFICATE \
+              --mount=type=secret,id=KEY \
+              --mount=type=secret,id=PASSPHRASE \
+              --mount=type=secret,mode=0444,id=GPG.gpg \
+              --mount=type=secret,id=NETRC \
+              --mount=type=secret,id=APT_SOURCES \
+              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              dpkg --add-architecture "$DEB_TARGET_ARCH"; \
+              apt-get update -qq && apt-get install -qq --no-install-recommends \
+                haskell-stack=2.3.3-1 \
+                clang=1:11.0-51+nmu5 \
+                lld=1:11.0-51+nmu5 \
+                libffi-dev:"$DEB_TARGET_ARCH"=3.3-6 \
+                libgmp-dev:"$DEB_TARGET_ARCH"=2:6.2.1+dfsg- \
+                zlib1g-dev:"$DEB_TARGET_ARCH"=1:1.2.11.dfsg-2 && \
+              rm -rf /var/lib/apt/lists/*
+
+RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
+              export PKG_CONFIG_PATH="/usr/lib/${DEB_TARGET_MULTIARCH}/pkgconfig"; \
+              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
+              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              stack install --ghc-options="-fPIC" --flag hadolint:static
+
+#######################
+# Shellcheck
+#######################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS builder-shellcheck
+
+ARG           GIT_REPO=github.com/koalaman/shellcheck
+ARG           GIT_VERSION=v0.7.2
+ARG           GIT_COMMIT=cff3e22911f25283ccef0a23bdfdfaafe3ad7c40
+
+WORKDIR       $GOPATH/src/$GIT_REPO
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+
+RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
+              --mount=type=secret,id=CERTIFICATE \
+              --mount=type=secret,id=KEY \
+              --mount=type=secret,id=PASSPHRASE \
+              --mount=type=secret,mode=0444,id=GPG.gpg \
+              --mount=type=secret,id=NETRC \
+              --mount=type=secret,id=APT_SOURCES \
+              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              dpkg --add-architecture "$DEB_TARGET_ARCH"; \
+              apt-get update -qq && apt-get install -qq --no-install-recommends \
+                haskell-stack=2.3.3-1 \
+                clang=1:11.0-51+nmu5 \
+                lld=1:11.0-51+nmu5 \
+                libffi-dev:"$DEB_TARGET_ARCH"=3.3-6 \
+                libgmp-dev:"$DEB_TARGET_ARCH"=2:6.2.1+dfsg- \
+                zlib1g-dev:"$DEB_TARGET_ARCH"=1:1.2.11.dfsg-2 && \
+              rm -rf /var/lib/apt/lists/*
+
+RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+              eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
+              export PKG_CONFIG_PATH="/usr/lib/${DEB_TARGET_MULTIARCH}/pkgconfig"; \
+              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
+              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              cabal update && cabal install
+              # install --ghc-options="-fPIC" --flag hadolint:static
+
+# ENV TARGET x86_64-apple-darwin18
+# ENV CABALOPTS "--with-ghc=$TARGET-ghc;--with-hc-pkg=$TARGET-ghc-pkg"
+
+# Linux
+# ghc automake autoconf build-essential llvm curl qemu-user-static gcc-$TARGET
+
+# aarch64-linux-gnu
+# ENV CABALOPTS "--ghc-options;-split-sections -optc-Os -optc-Wl,--gc-sections;--with-ghc=$TARGET-ghc;--with-hc-pkg=$TARGET-ghc-pkg"
+# linux.armv6hf
+
+#ARG           TARGET=
+# Prebuild the dependencies
+RUN           cabal update && IFS=';' && cabal install --dependencies-only "$CABALOPTS" ShellCheck
+
+
+# Shellcheck:
+# cabal update && cabal install -> .cabal/bin
+
+#######################
+# Builder assembly
+#######################
+# XXX we do not really need qemu at this stage
+FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder
+
+COPY          --from=builder-healthcheck-http /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-healthcheck-dns /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-healthcheck-rtsp /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-goello-client /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-goello-server /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-caddy /dist/boot/bin /dist/boot/bin
+# COPY          --from=builder-hadolint /dist/boot/bin /dist/boot/bin
+# COPY          --from=builder-shellcheck /dist/boot/bin /dist/boot/bin
+
+RUN           for i in /dist/boot/bin/*; do file "$i" | grep "statically linked" || { echo "$i is NOT static"; ldd "$i"; exit 1; }; done
+
+COPY          --from=builder-buildctl /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-cuelang /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-docker /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-terraform /dist/boot/bin /dist/boot/bin
+# Private for now
+#COPY          --from=builder-dagger /dist/boot/bin /dist/boot/bin
+
+RUN           chmod 555 /dist/boot/bin/*; \
+              epoch="$(date --date "$BUILD_CREATED" +%s)"; \
+              find /dist/boot/bin -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +;
+
+#######################
+# Running image
+#######################
+FROM          $FROM_IMAGE_RUNTIME
+
+COPY          --from=builder --chown=$BUILD_UID:root /dist /
+
+ARG           BUILD_CREATED="1976-04-14T17:00:00-07:00"
+ARG           BUILD_URL="https://github.com/dubo-dubon-duponey/docker-debian"
+ARG           BUILD_DOCUMENTATION="https://github.com/dubo-dubon-duponey/docker-debian"
+ARG           BUILD_SOURCE="https://github.com/dubo-dubon-duponey/docker-debian"
+ARG           BUILD_VERSION="unknown"
+ARG           BUILD_REVISION="unknown"
+ARG           BUILD_VENDOR="dubodubonduponey"
+ARG           BUILD_LICENSES="MIT"
+ARG           BUILD_REF_NAME="latest"
+ARG           BUILD_TITLE="A DBDBDP image"
+ARG           BUILD_DESCRIPTION="So image. Much DBDBDP. Such description."
+
+LABEL         org.opencontainers.image.created="$BUILD_CREATED"
+LABEL         org.opencontainers.image.authors="Dubo Dubon Duponey <dubo-dubon-duponey@farcloser.world>"
+LABEL         org.opencontainers.image.url="$BUILD_URL"
+LABEL         org.opencontainers.image.documentation="$BUILD_DOCUMENTATION"
+LABEL         org.opencontainers.image.source="$BUILD_SOURCE"
+LABEL         org.opencontainers.image.version="$BUILD_VERSION"
+LABEL         org.opencontainers.image.revision="$BUILD_REVISION"
+LABEL         org.opencontainers.image.vendor="$BUILD_VENDOR"
+LABEL         org.opencontainers.image.licenses="$BUILD_LICENSES"
+LABEL         org.opencontainers.image.ref.name="$BUILD_REF_NAME"
+LABEL         org.opencontainers.image.title="$BUILD_TITLE"
+LABEL         org.opencontainers.image.description="$BUILD_DESCRIPTION"
