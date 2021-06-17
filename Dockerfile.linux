@@ -1,13 +1,10 @@
-ARG           FROM_IMAGE_BUILDER=dubodubonduponey/base@sha256:b51f084380bc1bd2b665840317b6f19ccc844ee2fc7e700bf8633d95deba2819
+ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-06-01@sha256:a48c96e98f1ba16b462e975ef3b9ddc787668ba8ae2672769f5877c48d76642f
 ARG           FROM_IMAGE_RUNTIME=scratch
 
 #######################
 # A cross compiling base meant for CGO linux
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-cross
-
-# XXX port this to the base builder image
-SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
 
 RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
               --mount=type=secret,id=CERTIFICATE \
@@ -48,8 +45,8 @@ ARG           GOARCH="$TARGETARCH"
 # hadolint ignore=SC2046
 RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")"; \
               eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
-              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
-              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+              export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
               env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
                 -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
 
@@ -76,8 +73,8 @@ ARG           GOARCH="$TARGETARCH"
 # hadolint ignore=SC2046
 RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")"; \
               eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
-              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
-              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+              export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
               env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
                 -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
 
@@ -104,8 +101,8 @@ ARG           GOARCH="$TARGETARCH"
 # hadolint ignore=SC2046
 RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")"; \
               eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
-              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
-              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+              export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
               env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
                 -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
 
@@ -133,8 +130,8 @@ ARG           GOARCH="$TARGETARCH"
 # hadolint ignore=SC2046
 RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")"; \
               eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
-              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
-              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+              export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
               env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
                 -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
 
@@ -162,8 +159,8 @@ ARG           GOARCH="$TARGETARCH"
 # hadolint ignore=SC2046
 RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")"; \
               eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
-              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
-              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+              export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
               env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
                 -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
 
@@ -301,7 +298,7 @@ RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -tr
 #######################
 # Hadolint
 #######################
-FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS builder-hadolint
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS xxx-disabled-builder-hadolint
 
 ARG           GIT_REPO=github.com/hadolint/hadolint
 ARG           GIT_VERSION=v2.5.0
@@ -333,14 +330,14 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
 RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")"; \
               eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
               export PKG_CONFIG_PATH="/usr/lib/${DEB_TARGET_MULTIARCH}/pkgconfig"; \
-              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
-              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+              export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
               stack install --ghc-options="-fPIC" --flag hadolint:static
 
 #######################
 # Shellcheck
 #######################
-FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS builder-shellcheck
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS xxx-disabled-builder-shellcheck
 
 ARG           GIT_REPO=github.com/koalaman/shellcheck
 ARG           GIT_VERSION=v0.7.2
@@ -372,8 +369,8 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
 RUN           DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")"; \
               eval "$(dpkg-architecture -A "$DEB_TARGET_ARCH")"; \
               export PKG_CONFIG_PATH="/usr/lib/${DEB_TARGET_MULTIARCH}/pkgconfig"; \
-              export CC="${DEB_TARGET_MULTIARCH}-gcc"; \
-              export CXX="${DEB_TARGET_MULTIARCH}-g++"; \
+              export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+              export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
               cabal update && cabal install
               # install --ghc-options="-fPIC" --flag hadolint:static
 
