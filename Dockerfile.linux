@@ -320,10 +320,10 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
               dpkg --add-architecture "$DEB_TARGET_ARCH"; \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
                 haskell-stack=2.3.3-1 \
-                clang=1:11.0-51+nmu5 \
-                lld=1:11.0-51+nmu5 \
+                clang=1:11.0-51+nmu4 \
+                lld=1:11.0-51+nmu4 \
                 libffi-dev:"$DEB_TARGET_ARCH"=3.3-6 \
-                libgmp-dev:"$DEB_TARGET_ARCH"=2:6.2.1+dfsg- \
+                libgmp-dev:"$DEB_TARGET_ARCH"=2:6.2.1+dfsg-1 \
                 zlib1g-dev:"$DEB_TARGET_ARCH"=1:1.2.11.dfsg-2 && \
               rm -rf /var/lib/apt/lists/*
 
@@ -359,10 +359,10 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
               dpkg --add-architecture "$DEB_TARGET_ARCH"; \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
                 haskell-stack=2.3.3-1 \
-                clang=1:11.0-51+nmu5 \
-                lld=1:11.0-51+nmu5 \
+                clang=1:11.0-51+nmu4 \
+                lld=1:11.0-51+nmu4 \
                 libffi-dev:"$DEB_TARGET_ARCH"=3.3-6 \
-                libgmp-dev:"$DEB_TARGET_ARCH"=2:6.2.1+dfsg- \
+                libgmp-dev:"$DEB_TARGET_ARCH"=2:6.2.1+dfsg-1 \
                 zlib1g-dev:"$DEB_TARGET_ARCH"=1:1.2.11.dfsg-2 && \
               rm -rf /var/lib/apt/lists/*
 
