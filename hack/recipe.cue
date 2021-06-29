@@ -98,7 +98,7 @@ cakes: {
 		recipe: {
 			input: {
 				dockerfile: "Dockerfile.linux"
-				from: types.#Image & {#fromString: *"scratch" | string @tag(from_image, type=string)}
+				from: types.#Image & {#fromString: *"ghcr.io/dubo-dubon-duponey/debian:bullseye-2021-06-01" | string @tag(from_image, type=string)}
 			}
 			process: {
 				platforms: injector._platforms
@@ -127,7 +127,7 @@ cakes: {
 		recipe: {
 			input: {
 				dockerfile: "Dockerfile.macos"
-				from: types.#Image & {#fromString: *"scratch" | string @tag(from_image, type=string)}
+				from: types.#Image & {#fromString: *"ghcr.io/dubo-dubon-duponey/debian:bullseye-2021-06-01" | string @tag(from_image, type=string)}
 				// Point this to the folder where MacOSX*XYZ*.sdk live
 				// context: IJ
 				// Because of the way defaults work, this is the only way
@@ -157,7 +157,7 @@ cakes: {
 		recipe: {
 			input: {
 				dockerfile: "Dockerfile.macos"
-				from: types.#Image & {#fromString: *"scratch" | string @tag(from_image, type=string)}
+				from: types.#Image & {#fromString: *"ghcr.io/dubo-dubon-duponey/debian:bullseye-2021-06-01" | string @tag(from_image, type=string)}
 			}
 			process: {
 				// target: "foo"

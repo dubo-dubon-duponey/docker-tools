@@ -1,5 +1,5 @@
-ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-06-01@sha256:addbd9b89d8973df985d2d95e22383961ba7b9c04580ac6a7f406a3a9ec4731e
-ARG           FROM_IMAGE_RUNTIME=scratch
+ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-06-01@sha256:e3e3210201f6b63230d111fc0add56d4a7b384c18039bbfed72b7edac7658040
+ARG           FROM_IMAGE_RUNTIME=ghcr.io/dubo-dubon-duponey/base:runtime-bullseye-2021-06-01@sha256:163b9308a142430f6b3d6f37ff84de26943ef9fc0b2c283df4c2c8e5eedadffc
 
 #######################
 # A cross compiling base meant for CGO linux
@@ -233,8 +233,8 @@ RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -tr
 FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-goello-client
 
 ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
-ARG           GIT_VERSION=275a1eb
-ARG           GIT_COMMIT=275a1eb5f3fc21bb4a8e8e14e8fbf45d237bbc97
+ARG           GIT_VERSION=7ce1fb5
+ARG           GIT_COMMIT=7ce1fb5d9c739128d2644fbc1968b11efcb96ca2
 ARG           GO_BUILD_SOURCE=./cmd/client
 ARG           GO_BUILD_OUTPUT=goello-client
 ARG           GO_LD_FLAGS="-s -w"
@@ -256,8 +256,8 @@ FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                     
 
 # Latest as of June 9 2021
 ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
-ARG           GIT_VERSION=275a1eb
-ARG           GIT_COMMIT=275a1eb5f3fc21bb4a8e8e14e8fbf45d237bbc97
+ARG           GIT_VERSION=7ce1fb5
+ARG           GIT_COMMIT=7ce1fb5d9c739128d2644fbc1968b11efcb96ca2
 ARG           GO_BUILD_SOURCE=./cmd/server
 ARG           GO_BUILD_OUTPUT=goello-server
 ARG           GO_LD_FLAGS="-s -w"
@@ -279,8 +279,8 @@ FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                     
 
 # This is 2.4.0
 ARG           GIT_REPO=github.com/caddyserver/caddy
-ARG           GIT_VERSION=v2.4.0
-ARG           GIT_COMMIT=bc2210247861340c644d9825ac2b2860f8c6e12a
+ARG           GIT_VERSION=v2.4.3
+ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 ARG           GO_BUILD_SOURCE=./cmd/caddy
 ARG           GO_BUILD_OUTPUT=caddy
 ARG           GO_LD_FLAGS="-s -w"
@@ -395,7 +395,6 @@ RUN           cabal update && IFS=';' && cabal install --dependencies-only "$CAB
 #######################
 # Builder assembly
 #######################
-# XXX we do not really need qemu at this stage
 FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder
 
 COPY          --from=builder-healthcheck-http /dist/boot/bin /dist/boot/bin
