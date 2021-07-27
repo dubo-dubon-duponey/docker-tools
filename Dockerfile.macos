@@ -1,26 +1,23 @@
-ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-06-01@sha256:e3e3210201f6b63230d111fc0add56d4a7b384c18039bbfed72b7edac7658040
+ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-07-01@sha256:dbe45d04091f027b371e1bd4ea994f095a8b2ebbdd89357c56638fb678218151
 ARG           FROM_IMAGE_RUNTIME=scratch
 
-FROM          $FROM_IMAGE_BUILDER                                                                                       AS builder-sdk
+FROM          $FROM_IMAGE_BUILDER                                                                                       AS osx-cross
 
 ARG           GIT_REPO=github.com/tpoechtrager/osxcross
-ARG           GIT_VERSION=1c23b94
-ARG           GIT_COMMIT=1c23b94bad4efc78d66ae917fa173c0d27bd2545
+ARG           GIT_VERSION=de6c72e
+ARG           GIT_COMMIT=de6c72eff2d6013f5af46fba1fa205654c5cf5e2
 
 WORKDIR       /tools/osxcross
 RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+
+
+FROM          osx-cross                                                                                                 AS builder-sdk
 
 RUN           --mount=type=bind,target=/SDKs \
               ln -s /SDKs ./Packages; \
               XCODEDIR=. ./tools/gen_sdk_package.sh
 
 RUN           mkdir /dist; mv MacOSX* /dist
-
-# XXX WHY? linkmode external?
-#export CC=o64-clang
-#export CXX=o64-clang++
-#export LDFLAGS="$LDFLAGS -linkmode external -s"
-#export LDFLAGS_STATIC_DOCKER='-extld='${CC}
 
 FROM          scratch                                                                                                   AS sdk
 
@@ -29,235 +26,355 @@ COPY          --from=builder-sdk /dist /cache
 #######################
 # A cross compiling toolchain meant for CGO macOS binaries
 #######################
-FROM          $FROM_IMAGE_BUILDER                                                                                       AS builder-cross
+FROM          osx-cross                                                                                                 AS builder-cross
 
-RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
-              --mount=type=secret,id=CERTIFICATE \
-              --mount=type=secret,id=KEY \
-              --mount=type=secret,id=PASSPHRASE \
-              --mount=type=secret,mode=0444,id=GPG.gpg \
+RUN           --mount=type=secret,uid=100,id=CA \
+              --mount=type=secret,uid=100,id=CERTIFICATE \
+              --mount=type=secret,uid=100,id=KEY \
+              --mount=type=secret,uid=100,id=GPG.gpg \
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=APT_SOURCES \
-              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
                 lzma-dev=9.22-2.2 \
                 libxml2-dev=2.9.10+dfsg-6.7 \
                 cmake=3.18.4-2 \
                 patch=2.7.6-7 \
                 libssl-dev=1.1.1k-1 \
-                clang=1:11.0-51+nmu4 \
-                lld=1:11.0-51+nmu4 && \
+                clang=1:11.0-51+nmu5 \
+                lld=1:11.0-51+nmu5 \
+                python3=3.9.2-3 && \
               rm -rf /var/lib/apt/lists/*
 
-ARG           GIT_REPO=github.com/tpoechtrager/osxcross
-ARG           GIT_VERSION=1c23b94
-ARG           GIT_COMMIT=1c23b94bad4efc78d66ae917fa173c0d27bd2545
-
-WORKDIR       /tools/osxcross
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
 # hadolint ignore=DL3010
 COPY          ./cache/MacOSX*.sdk.tar.xz ./tarballs
 RUN           UNATTENDED=1 ./build.sh
 
-ONBUILD ARG   CC="o64-clang"
-ONBUILD ARG   CXX="o64-clang++"
-ONBUILD ARG   PATH="/tools/osxcross/target/bin:$PATH"
-ONBUILD ARG   MACOSX_DEPLOYMENT_TARGET=10.11
+WORKDIR       /source
+ENV           CC="o64-clang"
+ENV           CXX="o64-clang++"
+ENV           PATH="/tools/osxcross/target/bin:$PATH"
+ENV           MACOSX_DEPLOYMENT_TARGET=10.11
+ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
+
+# Unsupported by clang: -mcet -fstack-clash-protection
+ENV           WARNING_OPTIONS="-Werror=implicit-function-declaration -Werror=format-security -Wall"
+ENV           OPTIMIZATION_OPTIONS="-O3"
+ENV           DEBUGGING_OPTIONS="-grecord-gcc-switches -g"
+ENV           PREPROCESSOR_OPTIONS="-Wp,-D_GLIBCXX_ASSERTION -D_FORTIFY_SOURCE=2"
+ENV           COMPILER_OPTIONS="-pipe -fexceptions -fstack-protector-strong -fcf-protection"
+ENV           LDFLAGS="-Wl,-z,relro -Wl,-z,now -Wl,-z,defs -Wl,-z,noexecstack"
+ENV           CFLAGS="$WARNING_OPTIONS $OPTIMIZATION_OPTIONS $DEBUGGING_OPTIONS $PREPROCESSOR_OPTIONS $COMPILER_OPTIONS"
+ENV           CXXFLAGS="$CFLAGS"
+
+##########################################################################################################################################
+# Fetchers
+##########################################################################################################################################
+
+#######################
+# Fetcher: buildctl
+#######################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-buildctl
+
+ENV           GIT_REPO=github.com/moby/buildkit
+ARG           GIT_VERSION=v0.9.0
+ARG           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
+
+ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
+ENV           WITH_BUILD_OUTPUT="buildctl"
+
+ENV           CGO_ENABLED=1
+#ENV           ENABLE_STATIC=true
+ENV           WITH_CGO_NET=true
+ENV           WITH_LDFLAGS="-X $GIT_REPO/version.Version=$GIT_VERSION -X $GIT_REPO/version.Revision=$GIT_COMMIT -X $GIT_REPO/version.Package=$GIT_REPO"
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .
+RUN           git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
+
+#######################
+# Fetcher: cuelang
+#######################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-cuelang
+
+ENV           GIT_REPO=github.com/cuelang/cue
+ENV           GIT_VERSION=v0.4.0
+ENV           GIT_COMMIT=3b0a537a2db6d49d1ae67631a31c45ad97c69078
+
+ENV           WITH_BUILD_SOURCE="./cmd/cue"
+ENV           WITH_BUILD_OUTPUT="cue"
+
+ENV           CGO_ENABLED=1
+#ENV           ENABLE_STATIC=true
+ENV           WITH_CGO_NET=true
+ENV           WITH_LDFLAGS="-X cuelang.org/go/cmd/cue/cmd.version=$GIT_VERSION"
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .
+RUN           git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
+
+#######################
+# Fetcher: dagger
+#######################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-dagger
+
+ENV           GIT_REPO=github.com/dagger/dagger
+ENV           GIT_VERSION=v0.1.0-alpha12
+ENV           GIT_COMMIT=b805d37cb0c6314d330a389134b37e554485b42b
+
+ENV           WITH_BUILD_SOURCE="./cmd/dagger"
+ENV           WITH_BUILD_OUTPUT="dagger"
+
+ENV           CGO_ENABLED=1
+#ENV           ENABLE_STATIC=true
+ENV           WITH_CGO_NET=true
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .
+RUN           git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
+
+#######################
+# Fetcher: docker cli
+#######################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-docker-cli
+
+ENV           GIT_REPO=github.com/docker/cli
+ENV           GIT_VERSION=v20.10.7
+ENV           GIT_COMMIT=f0df35096d5f5e6b559b42c7fde6c65a2909f7c5
+
+ENV           WITH_BUILD_SOURCE="./cmd/docker"
+ENV           WITH_BUILD_OUTPUT="docker"
+
+ENV           CGO_ENABLED=1
+#ENV           ENABLE_STATIC=true
+ENV           WITH_CGO_NET=true
+ENV           WITH_LDFLAGS="-X $GIT_REPO/cli/version.Version=$GIT_VERSION -X $GIT_REPO/cli/version.GitCommit=$GIT_COMMIT"
+ENV           WITH_TAGS="pkcs11"
+
+# These extra two serve little to no purpose IMHO
+# /cli/version.PlatformName=${PLATFORM}\""
+# /cli/version.BuildTime=${BUILDTIME}\" \
+
+# XXX Docker PITA
+# cli is still not a go module, and uses vendoring
+# XXX with mod=vendor, is this still necessary?
+ENV           GOFLAGS="-mod=vendor"
+ENV           GO111MODULE=off
+WORKDIR       $GOPATH/src/$GIT_REPO
+# XXX Docker PITA
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .
+RUN           git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
+
+#######################
+# Fetcher: terraform
+#######################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-terraform
+
+ENV           GIT_REPO=github.com/hashicorp/terraform
+ENV           GIT_VERSION=v1.0.0
+ENV           GIT_COMMIT=b99f7beaad41a3290330621897e244030d020504
+
+ENV           WITH_BUILD_SOURCE="./"
+ENV           WITH_BUILD_OUTPUT="terraform"
+
+ENV           CGO_ENABLED=1
+#ENV           ENABLE_STATIC=true
+ENV           WITH_CGO_NET=true
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .
+RUN           git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
+
+#######################
+# Fetcher: goello
+#######################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-goello
+
+ENV           GIT_REPO=github.com/dubo-dubon-duponey/goello
+ENV           GIT_VERSION=7ce1fb5
+ENV           GIT_COMMIT=7ce1fb5d9c739128d2644fbc1968b11efcb96ca2
+
+# This one has many targets, so, let downstream decide
+ENV           WITH_BUILD_SOURCE="you_must_pick_what_you_want_to_build"
+ENV           WITH_BUILD_OUTPUT="you_must_pick_what_you_want_to_build"
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .
+RUN           git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
+
+#######################
+# Fetcher: caddy
+#######################
+FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-caddy
+
+ENV           GIT_REPO=github.com/caddyserver/caddy
+ENV           GIT_VERSION=v2.4.3
+ENV           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
+
+ENV           WITH_BUILD_SOURCE="./cmd/caddy"
+ENV           WITH_BUILD_OUTPUT="caddy"
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .
+RUN           git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
 
 ###################################################################
 # Buildctl
 ###################################################################
-FROM          builder-cross                                                                                             AS builder-buildctl
+FROM          fetcher-buildctl                                                                                          AS builder-buildctl
 
-# Master as of June 9 2021
-ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=0f9f55f
-ARG           GIT_COMMIT=0f9f55ff7ce061b1a089681cdc889c564bf9749b
-
-ARG           GO_BUILD_SOURCE="./cmd/buildctl"
-ARG           GO_BUILD_OUTPUT="buildctl"
-ARG           GO_LD_FLAGS="-s -w -X $GIT_REPO/version.Version=$GIT_VERSION -X $GIT_REPO/version.Revision=$GIT_COMMIT -X $GIT_REPO/version.Package=$GIT_REPO"
-ARG           GO_TAGS="netcgo cgo osusergo"
-ARG           CGO_ENABLED=1
-
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
 ARG           GOOS="darwin"
 ARG           GOARCH="amd64"
 
-# hadolint ignore=SC2046
-RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
-                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 ###################################################################
 # Docker cli
 ###################################################################
-FROM          builder-cross                                                                                             AS builder-docker
+FROM          fetcher-docker-cli                                                                                        AS builder-docker
 
-ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.7
-ARG           GIT_COMMIT=f0df35096d5f5e6b559b42c7fde6c65a2909f7c5
-
-ARG           GO_BUILD_SOURCE="./cmd/docker"
-ARG           GO_BUILD_OUTPUT="docker"
-ARG           GO_LD_FLAGS="-s -w"
-ARG           GO_TAGS="netcgo cgo osusergo pkcs11"
-ARG           CGO_ENABLED=1
-ARG           GO111MODULE=auto
-
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
 ARG           GOOS="darwin"
 ARG           GOARCH="amd64"
 
-# hadolint ignore=SC2046
-RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
-                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 ###################################################################
-# Docker cli
+# Terraform
 ###################################################################
-FROM          builder-cross                                                                                             AS builder-terraform
+FROM          fetcher-terraform                                                                                         AS builder-terraform
 
-ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.0.0
-ARG           GIT_COMMIT=b99f7beaad41a3290330621897e244030d020504
-
-ARG           GO_BUILD_SOURCE="./"
-ARG           GO_BUILD_OUTPUT="terraform"
-ARG           GO_LD_FLAGS="-s -w"
-ARG           GO_TAGS="netcgo cgo osusergo"
-ARG           CGO_ENABLED=1
-
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
 ARG           GOOS="darwin"
 ARG           GOARCH="amd64"
 
-# hadolint ignore=SC2046
-RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
-                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 ###################################################################
 # Buildctl
 ###################################################################
-FROM          builder-cross                                                                                             AS builder-dagger
+FROM          fetcher-dagger                                                                                            AS builder-dagger
 
-ARG           GIT_REPO=github.com/dagger/dagger
-ARG           GIT_VERSION=v0.1.0-alpha12
-ARG           GIT_COMMIT=b805d37cb0c6314d330a389134b37e554485b42b
-
-ARG           GO_BUILD_SOURCE="./cmd/dagger"
-ARG           GO_BUILD_OUTPUT="dagger"
-ARG           GO_LD_FLAGS="-s -w"
-ARG           GO_TAGS="netcgo cgo osusergo"
-ARG           CGO_ENABLED=1
-
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
 ARG           GOOS="darwin"
 ARG           GOARCH="amd64"
 
-# hadolint ignore=SC2046
-RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
-                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 ###################################################################
 # Buildctl
 ###################################################################
-FROM          builder-cross                                                                                             AS builder-cuelang
+FROM          fetcher-cuelang                                                                                           AS builder-cuelang
 
-ARG           GIT_REPO=github.com/cuelang/cue
-ARG           GIT_VERSION=v0.4.0
-ARG           GIT_COMMIT=3b0a537a2db6d49d1ae67631a31c45ad97c69078
-
-ARG           GO_BUILD_SOURCE="./cmd/cue"
-ARG           GO_BUILD_OUTPUT="cue"
-ARG           GO_LD_FLAGS="-s -w -X cuelang.org/go/cmd/cue/cmd.version=$GIT_VERSION"
-ARG           GO_TAGS="netcgo cgo osusergo"
-ARG           CGO_ENABLED=1
-
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
 ARG           GOOS="darwin"
 ARG           GOARCH="amd64"
 
-# hadolint ignore=SC2046
-RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
-                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 #######################
 # Goello
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-goello-client
+FROM          fetcher-goello                                                                                            AS builder-goello-client
 
-# Latest as of June 9 2021
-ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
-ARG           GIT_VERSION=7ce1fb5
-ARG           GIT_COMMIT=7ce1fb5d9c739128d2644fbc1968b11efcb96ca2
-ARG           GO_BUILD_SOURCE=./cmd/client
-ARG           GO_BUILD_OUTPUT=goello-client
-ARG           GO_LD_FLAGS="-s -w"
-ARG           GO_TAGS="netgo osusergo"
+ENV           WITH_BUILD_SOURCE=./cmd/client
+ENV           WITH_BUILD_OUTPUT=goello-client
 
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
 ARG           GOOS="darwin"
 ARG           GOARCH="amd64"
 
-# hadolint ignore=SC2046
-RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
-                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 #######################
 # Goello
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-goello-server
+FROM          fetcher-goello                                                                                            AS builder-goello-server
 
-# Latest as of June 9 2021
-ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
-ARG           GIT_VERSION=7ce1fb5
-ARG           GIT_COMMIT=7ce1fb5d9c739128d2644fbc1968b11efcb96ca2
-ARG           GO_BUILD_SOURCE=./cmd/server
-ARG           GO_BUILD_OUTPUT=goello-server
-ARG           GO_LD_FLAGS="-s -w"
-ARG           GO_TAGS="netgo osusergo"
+ENV           WITH_BUILD_SOURCE=./cmd/server
+ENV           WITH_BUILD_OUTPUT=goello-server
 
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
 ARG           GOOS="darwin"
 ARG           GOARCH="amd64"
 
-# hadolint ignore=SC2046
-RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
-                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 #######################
 # Caddy
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-caddy
+FROM          fetcher-caddy                                                                                             AS builder-caddy
 
-# This is 2.4.0
-ARG           GIT_REPO=github.com/caddyserver/caddy
-ARG           GIT_VERSION=v2.4.3
-ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
-ARG           GO_BUILD_SOURCE=./cmd/caddy
-ARG           GO_BUILD_OUTPUT=caddy
-ARG           GO_LD_FLAGS="-s -w"
-ARG           GO_TAGS="netgo osusergo"
-
-WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
-# Technically, we could just use the linux section and feed it GOOS and GOARCH - possibly more involved in other cases though
 ARG           GOOS="darwin"
 ARG           GOARCH="amd64"
 
-# hadolint ignore=SC2046
-RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
-                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 #######################
 # Builder assembly
