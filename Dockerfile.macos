@@ -63,7 +63,9 @@ ENV           OPTIMIZATION_OPTIONS="-O3"
 ENV           DEBUGGING_OPTIONS="-grecord-gcc-switches -g"
 ENV           PREPROCESSOR_OPTIONS="-Wp,-D_GLIBCXX_ASSERTION -D_FORTIFY_SOURCE=2"
 ENV           COMPILER_OPTIONS="-pipe -fexceptions -fstack-protector-strong -fcf-protection"
-ENV           LDFLAGS="-Wl,-z,relro -Wl,-z,now -Wl,-z,defs -Wl,-z,noexecstack"
+# -Wl,-z,relro -Wl,-z,now -Wl,-z,defs -Wl,-z,noexecstack"
+# It seems like ld for mac does not support these
+ENV           LDFLAGS=""
 ENV           CFLAGS="$WARNING_OPTIONS $OPTIMIZATION_OPTIONS $DEBUGGING_OPTIONS $PREPROCESSOR_OPTIONS $COMPILER_OPTIONS"
 ENV           CXXFLAGS="$CFLAGS"
 
@@ -85,6 +87,7 @@ ENV           WITH_BUILD_OUTPUT="buildctl"
 
 ENV           CGO_ENABLED=1
 #ENV           ENABLE_STATIC=true
+ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 ENV           WITH_LDFLAGS="-X $GIT_REPO/version.Version=$GIT_VERSION -X $GIT_REPO/version.Revision=$GIT_COMMIT -X $GIT_REPO/version.Package=$GIT_REPO"
 
@@ -108,6 +111,7 @@ ENV           WITH_BUILD_OUTPUT="cue"
 
 ENV           CGO_ENABLED=1
 #ENV           ENABLE_STATIC=true
+ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 ENV           WITH_LDFLAGS="-X cuelang.org/go/cmd/cue/cmd.version=$GIT_VERSION"
 
@@ -131,6 +135,7 @@ ENV           WITH_BUILD_OUTPUT="dagger"
 
 ENV           CGO_ENABLED=1
 #ENV           ENABLE_STATIC=true
+ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 
 RUN           git clone --recurse-submodules git://"$GIT_REPO" .
@@ -153,7 +158,9 @@ ENV           WITH_BUILD_OUTPUT="docker"
 
 ENV           CGO_ENABLED=1
 #ENV           ENABLE_STATIC=true
+ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
+
 ENV           WITH_LDFLAGS="-X $GIT_REPO/cli/version.Version=$GIT_VERSION -X $GIT_REPO/cli/version.GitCommit=$GIT_COMMIT"
 ENV           WITH_TAGS="pkcs11"
 
@@ -189,6 +196,7 @@ ENV           WITH_BUILD_OUTPUT="terraform"
 
 ENV           CGO_ENABLED=1
 #ENV           ENABLE_STATIC=true
+ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 
 RUN           git clone --recurse-submodules git://"$GIT_REPO" .
@@ -207,6 +215,7 @@ ENV           GIT_VERSION=7ce1fb5
 ENV           GIT_COMMIT=7ce1fb5d9c739128d2644fbc1968b11efcb96ca2
 
 # This one has many targets, so, let downstream decide
+ENV           ENABLE_PIE=true
 ENV           WITH_BUILD_SOURCE="you_must_pick_what_you_want_to_build"
 ENV           WITH_BUILD_OUTPUT="you_must_pick_what_you_want_to_build"
 
@@ -225,6 +234,7 @@ ENV           GIT_REPO=github.com/caddyserver/caddy
 ENV           GIT_VERSION=v2.4.3
 ENV           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 
+ENV           ENABLE_PIE=true
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
 
