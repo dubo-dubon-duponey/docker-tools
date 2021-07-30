@@ -1,7 +1,8 @@
-ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-07-01@sha256:dbe45d04091f027b371e1bd4ea994f095a8b2ebbdd89357c56638fb678218151
-ARG           FROM_IMAGE_FETCHER=ghcr.io/dubo-dubon-duponey/base:golang-bullseye-2021-07-01
-ARG           FROM_IMAGE_AUDITOR=ghcr.io/dubo-dubon-duponey/base:auditor-bullseye-2021-07-01
-ARG           FROM_IMAGE_RUNTIME=ghcr.io/dubo-dubon-duponey/base:runtime-bullseye-2021-07-01@sha256:63060b5109c4d8be7a8b4f97e3bb7431781c07b3b46263e372ab37fb8aae7583
+ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-07-01@sha256:dbe45d04091f027b371e1bd4ea994f095a8b2ebbdd89357c56638fb678218151
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-07-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-07-01@sha256:63060b5109c4d8be7a8b4f97e3bb7431781c07b3b46263e372ab37fb8aae7583
 
 ##########################################################################################################################################
 # Fetchers
@@ -10,19 +11,19 @@ ARG           FROM_IMAGE_RUNTIME=ghcr.io/dubo-dubon-duponey/base:runtime-bullsey
 #######################
 # Fetcher: buildctl
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS fetcher-buildctl
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ENV           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.9.0
-ARG           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
+ENV           GIT_VERSION=v0.9.0
+ENV           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
+ENV           WITH_CGO_NET=true
+ENV           WITH_LDFLAGS="-X $GIT_REPO/version.Version=$GIT_VERSION -X $GIT_REPO/version.Revision=$GIT_COMMIT -X $GIT_REPO/version.Package=$GIT_REPO"
 
 ENV           CGO_ENABLED=1
 ENV           ENABLE_STATIC=true
-ENV           WITH_CGO_NET=true
-ENV           WITH_LDFLAGS="-X $GIT_REPO/version.Version=$GIT_VERSION -X $GIT_REPO/version.Revision=$GIT_COMMIT -X $GIT_REPO/version.Package=$GIT_REPO"
 
 RUN           git clone --recurse-submodules git://"$GIT_REPO" .
 RUN           git checkout "$GIT_COMMIT"
@@ -33,7 +34,7 @@ RUN           --mount=type=secret,id=CA \
 #######################
 # Fetcher: cuelang
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS fetcher-cuelang
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-cuelang
 
 ENV           GIT_REPO=github.com/cuelang/cue
 ENV           GIT_VERSION=v0.4.0
@@ -41,11 +42,11 @@ ENV           GIT_COMMIT=3b0a537a2db6d49d1ae67631a31c45ad97c69078
 
 ENV           WITH_BUILD_SOURCE="./cmd/cue"
 ENV           WITH_BUILD_OUTPUT="cue"
+ENV           WITH_CGO_NET=true
+ENV           WITH_LDFLAGS="-X cuelang.org/go/cmd/cue/cmd.version=$GIT_VERSION"
 
 ENV           CGO_ENABLED=1
 ENV           ENABLE_STATIC=true
-ENV           WITH_CGO_NET=true
-ENV           WITH_LDFLAGS="-X cuelang.org/go/cmd/cue/cmd.version=$GIT_VERSION"
 
 RUN           git clone --recurse-submodules git://"$GIT_REPO" .
 RUN           git checkout "$GIT_COMMIT"
@@ -56,7 +57,7 @@ RUN           --mount=type=secret,id=CA \
 #######################
 # Fetcher: dagger
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS fetcher-dagger
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-dagger
 
 ENV           GIT_REPO=github.com/dagger/dagger
 ENV           GIT_VERSION=v0.1.0-alpha12
@@ -64,10 +65,10 @@ ENV           GIT_COMMIT=b805d37cb0c6314d330a389134b37e554485b42b
 
 ENV           WITH_BUILD_SOURCE="./cmd/dagger"
 ENV           WITH_BUILD_OUTPUT="dagger"
+ENV           WITH_CGO_NET=true
 
 ENV           CGO_ENABLED=1
 ENV           ENABLE_STATIC=true
-ENV           WITH_CGO_NET=true
 
 RUN           git clone --recurse-submodules git://"$GIT_REPO" .
 RUN           git checkout "$GIT_COMMIT"
@@ -78,7 +79,7 @@ RUN           --mount=type=secret,id=CA \
 #######################
 # Fetcher: docker cli
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS fetcher-docker-cli
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
 ENV           GIT_REPO=github.com/docker/cli
 ENV           GIT_VERSION=v20.10.7
@@ -86,15 +87,15 @@ ENV           GIT_COMMIT=f0df35096d5f5e6b559b42c7fde6c65a2909f7c5
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
-
-# For terraform, we do want netCgo - for some reason, the build on armhf is garbled if static, so, disabling static (same with docker, likely the same dependency is foobar)
-ENV           CGO_ENABLED=1
 ENV           WITH_CGO_NET=true
-ENV           ENABLE_STATIC=""
-ENV           ENABLE_PIE=true
-
 ENV           WITH_LDFLAGS="-X $GIT_REPO/cli/version.Version=$GIT_VERSION -X $GIT_REPO/cli/version.GitCommit=$GIT_COMMIT"
 ENV           WITH_TAGS="pkcs11"
+
+# We do want NETCGO - for some reason, the build on armhf is garbled if static
+# It won't build static though because of the glibc netcgo shenanigans
+ENV           CGO_ENABLED=1
+ENV           ENABLE_STATIC=true
+ENV           ENABLE_PIE=true
 
 # These extra two serve little to no purpose IMHO
 # /cli/version.PlatformName=${PLATFORM}\""
@@ -117,7 +118,7 @@ RUN           --mount=type=secret,id=CA \
 #######################
 # Fetcher: terraform
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS fetcher-terraform
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ENV           GIT_REPO=github.com/hashicorp/terraform
 ENV           GIT_VERSION=v1.0.0
@@ -125,11 +126,10 @@ ENV           GIT_COMMIT=b99f7beaad41a3290330621897e244030d020504
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
-
-# For terraform, we do want netCgo - for some reason, the build on armhf is garbled if static, so, disabling static (same with docker, likely the same dependency is foobar)
-ENV           CGO_ENABLED=1
 ENV           WITH_CGO_NET=true
-ENV           ENABLE_STATIC=""
+
+ENV           CGO_ENABLED=1
+ENV           ENABLE_STATIC=true
 ENV           ENABLE_PIE=true
 
 RUN           git clone --recurse-submodules git://"$GIT_REPO" .
@@ -141,7 +141,7 @@ RUN           --mount=type=secret,id=CA \
 #######################
 # Fetcher: healthcheckers
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS fetcher-healthcheckers
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-healthcheckers
 
 ENV           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
 ENV           GIT_VERSION=0507893
@@ -160,7 +160,7 @@ RUN           --mount=type=secret,id=CA \
 #######################
 # Fetcher: goello
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS fetcher-goello
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-goello
 
 ENV           GIT_REPO=github.com/dubo-dubon-duponey/goello
 ENV           GIT_VERSION=6b6dc65
@@ -179,7 +179,7 @@ RUN           --mount=type=secret,id=CA \
 #######################
 # Fetcher: caddy
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS fetcher-caddy
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-caddy
 
 ENV           GIT_REPO=github.com/caddyserver/caddy
 ENV           GIT_VERSION=v2.4.3
@@ -213,11 +213,12 @@ ARG           TARGETVARIANT
 ENV           GOOS=$TARGETOS
 ENV           GOARCH=$TARGETARCH
 
-ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           CGO_CFLAGS="${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -225,7 +226,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -245,8 +252,9 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -254,7 +262,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -274,8 +288,9 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -283,7 +298,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -303,8 +324,9 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -312,7 +334,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -332,8 +360,9 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -341,7 +370,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -364,8 +399,9 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 ENV           WITH_BUILD_SOURCE=./cmd/http
 ENV           WITH_BUILD_OUTPUT=http-health
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -373,7 +409,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -382,8 +424,9 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 ENV           WITH_BUILD_SOURCE=./cmd/rtsp
 ENV           WITH_BUILD_OUTPUT=rtsp-health
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -391,7 +434,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -400,8 +449,9 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 ENV           WITH_BUILD_SOURCE=./cmd/dns
 ENV           WITH_BUILD_OUTPUT=dns-health
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -409,7 +459,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -432,8 +488,9 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 ENV           WITH_BUILD_SOURCE=./cmd/client
 ENV           WITH_BUILD_OUTPUT=goello-client
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -441,7 +498,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -450,8 +513,9 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 ENV           WITH_BUILD_SOURCE=./cmd/server
 ENV           WITH_BUILD_OUTPUT=goello-server
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -459,7 +523,13 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
@@ -476,34 +546,12 @@ ARG           TARGETVARIANT
 ENV           GOOS=$TARGETOS
 ENV           GOARCH=$TARGETARCH
 
-#ENV           WARNING_OPTIONS="-Werror=implicit-function-declaration -Werror=format-security -Wall"
-# https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#Optimize-Options
-#ENV           OPTIMIZATION_OPTIONS="-O3"
-# https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html#Debugging-Options
-#ENV           DEBUGGING_OPTIONS="-grecord-gcc-switches -g"
-# https://gcc.gnu.org/onlinedocs/gcc/Preprocessor-Options.html#Preprocessor-Options
-#ENV           PREPROCESSOR_OPTIONS="-Wp,-D_GLIBCXX_ASSERTION -D_FORTIFY_SOURCE=2"
-# https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html
-#ENV           COMPILER_OPTIONS="-pipe -fexceptions -fstack-protector-strong -fstack-clash-protection"
-# AMD64 only
-# -mcet -fcf-protection
-# https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html#Link-Options
-#ENV           LDFLAGS="-Wl,-z,relro -Wl,-z,now -Wl,-z,defs -Wl,-z,noexecstack"
-#ENV           CFLAGS="$WARNING_OPTIONS $OPTIMIZATION_OPTIONS $DEBUGGING_OPTIONS $PREPROCESSOR_OPTIONS $COMPILER_OPTIONS"
-#ENV           CXXFLAGS="$CFLAGS"
-
-#ENV           CGO_CFLAGS="${CFLAGS:-} -D_FORTIFY_SOURCE=2 -Wp,-D_FORTIFY_SOURCE=2 ${ENABLE_PIE:+-fPIE}"
-#ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
-
-#ENV           PREPROCESSOR_OPTIONS="-Wp,-D_GLIBCXX_ASSERTION -D_FORTIFY_SOURCE=2"
-#ENV           CFLAGS="$WARNING_OPTIONS $OPTIMIZATION_OPTIONS $DEBUGGING_OPTIONS $PREPROCESSOR_OPTIONS $COMPILER_OPTIONS"
-#ENV           CXXFLAGS="$CFLAGS"
-
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# If CGO, set the toolchain
-# Also disable static if we have PIE and an unsupported platform
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
@@ -511,16 +559,22 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
                 export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
-                [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
                 WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
                 WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
               }; \
-              go build -v -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 #######################
 # Builder assembly
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_AUDITOR                                                             AS builder
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                                             AS builder
 
 ARG           TARGETARCH
 ARG           TARGETVARIANT
@@ -585,6 +639,6 @@ RUN           dprintf(){\
 #######################
 # Running image
 #######################
-FROM          $FROM_IMAGE_RUNTIME
+FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME
 
 COPY          --from=builder --chown=$BUILD_UID:root /dist /

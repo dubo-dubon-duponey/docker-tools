@@ -1,11 +1,13 @@
-ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-07-01@sha256:dbe45d04091f027b371e1bd4ea994f095a8b2ebbdd89357c56638fb678218151
+ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-07-01@sha256:dbe45d04091f027b371e1bd4ea994f095a8b2ebbdd89357c56638fb678218151
 ARG           FROM_IMAGE_RUNTIME=scratch
 
-FROM          $FROM_IMAGE_BUILDER                                                                                       AS osx-cross
+FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS osx-cross
 
-ARG           GIT_REPO=github.com/tpoechtrager/osxcross
-ARG           GIT_VERSION=de6c72e
-ARG           GIT_COMMIT=de6c72eff2d6013f5af46fba1fa205654c5cf5e2
+ENV           GIT_REPO=github.com/tpoechtrager/osxcross
+ENV           GIT_VERSION=de6c72e
+ENV           GIT_COMMIT=de6c72eff2d6013f5af46fba1fa205654c5cf5e2
 
 WORKDIR       /tools/osxcross
 RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
@@ -79,8 +81,8 @@ ENV           CXXFLAGS="$CFLAGS"
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-buildctl
 
 ENV           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.9.0
-ARG           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
+ENV           GIT_VERSION=v0.9.0
+ENV           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -249,8 +251,8 @@ RUN           --mount=type=secret,id=CA \
 ###################################################################
 FROM          fetcher-buildctl                                                                                          AS builder-buildctl
 
-ARG           GOOS="darwin"
-ARG           GOARCH="amd64"
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
 
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
@@ -266,8 +268,8 @@ RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
 ###################################################################
 FROM          fetcher-docker-cli                                                                                        AS builder-docker
 
-ARG           GOOS="darwin"
-ARG           GOARCH="amd64"
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
 
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
@@ -283,8 +285,8 @@ RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
 ###################################################################
 FROM          fetcher-terraform                                                                                         AS builder-terraform
 
-ARG           GOOS="darwin"
-ARG           GOARCH="amd64"
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
 
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
@@ -300,8 +302,8 @@ RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
 ###################################################################
 FROM          fetcher-dagger                                                                                            AS builder-dagger
 
-ARG           GOOS="darwin"
-ARG           GOARCH="amd64"
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
 
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
@@ -317,8 +319,8 @@ RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
 ###################################################################
 FROM          fetcher-cuelang                                                                                           AS builder-cuelang
 
-ARG           GOOS="darwin"
-ARG           GOARCH="amd64"
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
 
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
@@ -337,8 +339,8 @@ FROM          fetcher-goello                                                    
 ENV           WITH_BUILD_SOURCE=./cmd/client
 ENV           WITH_BUILD_OUTPUT=goello-client
 
-ARG           GOOS="darwin"
-ARG           GOARCH="amd64"
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
 
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
@@ -357,8 +359,8 @@ FROM          fetcher-goello                                                    
 ENV           WITH_BUILD_SOURCE=./cmd/server
 ENV           WITH_BUILD_OUTPUT=goello-server
 
-ARG           GOOS="darwin"
-ARG           GOARCH="amd64"
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
 
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
@@ -374,8 +376,8 @@ RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
 #######################
 FROM          fetcher-caddy                                                                                             AS builder-caddy
 
-ARG           GOOS="darwin"
-ARG           GOARCH="amd64"
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
 
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
@@ -389,7 +391,7 @@ RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
 #######################
 # Builder assembly
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS builder
 
 COPY          --from=builder-goello-client /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-goello-server /dist/boot/bin /dist/boot/bin
