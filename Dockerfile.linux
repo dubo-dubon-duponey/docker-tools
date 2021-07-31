@@ -213,7 +213,7 @@ ARG           TARGETVARIANT
 ENV           GOOS=$TARGETOS
 ENV           GOARCH=$TARGETARCH
 
-ENV           CGO_CFLAGS="${ENABLE_PIE:+-fPIE}"
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
 # Important cases being handled:
@@ -574,7 +574,7 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 #######################
 # Builder assembly
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                                             AS builder
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS builder
 
 ARG           TARGETARCH
 ARG           TARGETVARIANT
