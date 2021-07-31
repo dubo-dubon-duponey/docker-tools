@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-07-01@sha256:9a0f1bfcd74cb2283548e5ac8b26297279eca432c1561c76f02a1c9235477372
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-07-01@sha256:8941d7dd6b10b67d79372aee6813c49c788153931b40e2f6d2dd6aa49a024100
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-07-01@sha256:ea8419d610a4d3e509626b9f36882bcc3ddcbeadd6b1850a9c0c71fddfe7ec6d
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-07-01@sha256:f1c46316c38cc1ca54fd53b54b73797b35ba65ee727beea1a5ed08d0ad7e8ccf
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-07-01@sha256:e8ab0e88d8b295537e917e36441da141ea69111680f86e233815e7fb9745aafa
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-07-01@sha256:9f5b20d392e1a1082799b3befddca68cee2636c72c502aa7652d160896f85b36
 
 ##########################################################################################################################################
 # Fetchers
