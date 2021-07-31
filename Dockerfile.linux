@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-07-01@sha256:dbe45d04091f027b371e1bd4ea994f095a8b2ebbdd89357c56638fb678218151
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-07-01
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-07-01@sha256:63060b5109c4d8be7a8b4f97e3bb7431781c07b3b46263e372ab37fb8aae7583
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-07-01@sha256:9a0f1bfcd74cb2283548e5ac8b26297279eca432c1561c76f02a1c9235477372
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-07-01@sha256:8941d7dd6b10b67d79372aee6813c49c788153931b40e2f6d2dd6aa49a024100
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-07-01@sha256:ea8419d610a4d3e509626b9f36882bcc3ddcbeadd6b1850a9c0c71fddfe7ec6d
 
 ##########################################################################################################################################
 # Fetchers
@@ -121,8 +121,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ENV           GIT_REPO=github.com/hashicorp/terraform
-ENV           GIT_VERSION=v1.0.0
-ENV           GIT_COMMIT=b99f7beaad41a3290330621897e244030d020504
+ENV           GIT_VERSION=v1.0.3
+ENV           GIT_COMMIT=676e5c4355e9fd8bf29009576781d4adf6dc5e80
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -131,9 +131,18 @@ ENV           WITH_CGO_NET=true
 ENV           CGO_ENABLED=1
 ENV           ENABLE_STATIC=true
 ENV           ENABLE_PIE=true
+ENV           WITH_CGO_NET=true
 
 RUN           git clone --recurse-submodules git://"$GIT_REPO" .
 RUN           git checkout "$GIT_COMMIT"
+
+# XXX https://github.com/hashicorp/terraform/issues/29021
+RUN           echo "replace github.com/tencentcloud/tencentcloud-sdk-go v3.0.82+incompatible => github.com/tencentcloud/tencentcloud-sdk-go v1.0.191" >> go.mod
+
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              go mod tidy
+
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -633,7 +642,7 @@ RUN           dprintf(){\
                 { \
                   printf "Running? "; \
                   "$i" "--version" >/dev/null 2>&1 || "$i" version >/dev/null 2>&1; \
-                } && dprintf "YES" || { dprintf "NO"; exit 1; }; \
+                } && dprintf "YES" || { dprintf "NO"; "$i" --version; "$i" version; exit 1; }; \
               done
 
 #######################

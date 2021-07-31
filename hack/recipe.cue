@@ -127,7 +127,7 @@ cakes: macos: recipe: {
 	metadata: ref_name: "linux-" + injectors.suite + "-" + injectors.date
 }
 
-cake: linux: recipe: {
+cakes: linux: recipe: {
 	input: from: registry: injectors.registry
 
 	if injectors.platforms != _|_ {
