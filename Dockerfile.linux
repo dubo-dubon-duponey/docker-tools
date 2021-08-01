@@ -645,6 +645,43 @@ RUN           dprintf(){\
                 } && dprintf "YES" || { dprintf "NO"; "$i" --version; "$i" version; exit 1; }; \
               done
 
+# XXX below four stages are provisional for future (splitting this into two images) as this is just obnoxious to compile
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS auditing-runtime-tools
+
+ARG           TARGETARCH
+ARG           TARGETVARIANT
+
+COPY          --from=builder-healthcheckers /dist /dist
+COPY          --from=builder-goello         /dist /dist
+COPY          --from=builder-caddy          /dist /dist
+
+RUN           chmod 555 /dist/boot/bin/*; \
+              epoch="$(date --date "$BUILD_CREATED" +%s)"; \
+              find /dist -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +;
+
+
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS auditing-build-tools
+
+ARG           TARGETARCH
+ARG           TARGETVARIANT
+
+COPY          --from=builder-buildctl   /dist /dist
+COPY          --from=builder-cuelang    /dist /dist
+COPY          --from=builder-docker     /dist /dist
+COPY          --from=builder-terraform  /dist /dist
+
+RUN           chmod 555 /dist/boot/bin/*; \
+              epoch="$(date --date "$BUILD_CREATED" +%s)"; \
+              find /dist -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +;
+
+FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                                                        AS runtime-tools
+
+COPY          --from=auditing-runtime-tools --chown=$BUILD_UID:root /dist /
+
+FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                                                        AS build-tools
+
+COPY          --from=auditing-build-tools   --chown=$BUILD_UID:root /dist /
+
 #######################
 # Running image
 #######################
