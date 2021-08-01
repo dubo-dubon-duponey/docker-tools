@@ -29,10 +29,12 @@ cakes: {
 					types.#Platforms.#I386,
 					types.#Platforms.#V7,
 					types.#Platforms.#V6,
-					types.#Platforms.#S390X,
 					types.#Platforms.#PPC64LE,
 				]
 			}
+			// XXX Broke recently
+			// Possibly aggressive CFLAGS - buildctl and terraform are dead
+			// types.#Platforms.#S390X,
 			output: {
 				images: {
 					registries: {...} | * {
@@ -123,8 +125,8 @@ cakes: macos: recipe: {
 		"docker.io": "dubodubonduponey"
 	}
 
-	output: images: tags: ["linux-" + injectors.suite + "-" + injectors.date, "linux-" + injectors.suite + "-latest", "linux-latest"]
-	metadata: ref_name: "linux-" + injectors.suite + "-" + injectors.date
+	output: images: tags: ["macos-" + injectors.suite + "-" + injectors.date, "macos-" + injectors.suite + "-latest", "macos-latest"]
+	metadata: ref_name: "macos-" + injectors.suite + "-" + injectors.date
 }
 
 cakes: linux: recipe: {
