@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:9c9ee41604a104f5c7143b2162f871f70e5e721cf3f912e026e99c599c7d1a9a
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:85f2b72ab99c8fbbdb9b8f738653a9a89974ec81cd290dc30b8dbe5c06c8f1a9
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:c5ab0f9810be28da787daf0074ea890da788ef1e51b42d2982743f36932541fb
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:f492d8441ddd82cad64889d44fa67cdf3f058ca44ab896de436575045a59604c
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:ea132be1215fbe9851cc5ef48c32779ccfad4f93877e8d12fa032da1f5b1ca06
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:edc80b2c8fd94647f793cbcb7125c87e8db2424f16b9fd0b8e173af850932b48
 
 ##########################################################################################################################################
 # Fetchers
@@ -172,8 +172,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-goello
 
 ENV           GIT_REPO=github.com/dubo-dubon-duponey/goello
-ENV           GIT_VERSION=6b6dc65
-ENV           GIT_COMMIT=6b6dc65d2eb9ab339ef7ce1ea4458056e88250c3
+ENV           GIT_VERSION=19962e4
+ENV           GIT_COMMIT=19962e48faffa5c5593860ebd7123d8ecd4bbae7
 
 # This one has many targets, so, let downstream decide
 ENV           WITH_BUILD_SOURCE="you_must_pick_what_you_want_to_build"
