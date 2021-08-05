@@ -37,9 +37,6 @@ cakes: {
 			// types.#Platforms.#S390X,
 			output: {
 				images: {
-					registries: {...} | * {
-						"ghcr.io": "dubo-dubon-duponey",
-					},
 					names: [...string] | * ["tools"],
 					tags: [...string] | * ["linux-latest"]
 				}
@@ -81,9 +78,6 @@ cakes: {
 			}
 			output: {
 				images: {
-					registries: {...} | * {
-						"ghcr.io": "dubo-dubon-duponey",
-					},
 					names: [...string] | * ["tools"],
 					tags: [...string] | * ["macos-latest"]
 				}
@@ -119,12 +113,6 @@ cakes: sdk: recipe: {
 cakes: macos: recipe: {
 	input: from: registry: injectors.registry
 
-	output: images: registries: {
-		"push-registry.local": "dubo-dubon-duponey",
-		"ghcr.io": "dubo-dubon-duponey",
-		"docker.io": "dubodubonduponey"
-	}
-
 	output: images: tags: ["macos-" + injectors.suite + "-" + injectors.date, "macos-" + injectors.suite + "-latest", "macos-latest"]
 	metadata: ref_name: "macos-" + injectors.suite + "-" + injectors.date
 }
@@ -134,12 +122,6 @@ cakes: linux: recipe: {
 
 	if injectors.platforms != _|_ {
 		process: platforms: strings.Split(injectors.platforms, ",")
-	}
-
-	output: images: registries: {
-		"push-registry.local": "dubo-dubon-duponey",
-		"ghcr.io": "dubo-dubon-duponey",
-		"docker.io": "dubodubonduponey"
 	}
 
 	output: images: tags: ["linux-" + injectors.suite + "-" + injectors.date, "linux-" + injectors.suite + "-latest", "linux-latest"]

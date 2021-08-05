@@ -1,7 +1,7 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
 ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:f492d8441ddd82cad64889d44fa67cdf3f058ca44ab896de436575045a59604c
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:ea132be1215fbe9851cc5ef48c32779ccfad4f93877e8d12fa032da1f5b1ca06
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:a9adfa210235133d99bf06fab9a631cd6d44ee3aed6b081ad61b342fcc7d189c
 ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:edc80b2c8fd94647f793cbcb7125c87e8db2424f16b9fd0b8e173af850932b48
 
 ##########################################################################################################################################
