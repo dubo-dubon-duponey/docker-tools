@@ -128,6 +128,7 @@ UserDefined: scullery.#Icing
 cakes: {
 	macos: icing: UserDefined
 	linux: icing: UserDefined
+	linux_dev: icing: UserDefined
 	sdk: icing: UserDefined
 }
 
@@ -159,5 +160,16 @@ cakes: linux: recipe: {
 
 	output: images: tags: ["linux-" + injectors.suite + "-" + injectors.date, "linux-" + injectors.suite + "-latest", "linux-latest"]
 	metadata: ref_name: "linux-" + injectors.suite + "-" + injectors.date
+}
+
+cakes: linux_dev: recipe: {
+	input: from: registry: injectors.registry
+
+	if injectors.platforms != _|_ {
+		process: platforms: strings.Split(injectors.platforms, ",")
+	}
+
+	output: images: tags: ["linux-dev-" + injectors.suite + "-" + injectors.date, "linux-dev-" + injectors.suite + "-latest", "linux-dev-latest"]
+	metadata: ref_name: "linux-dev-" + injectors.suite + "-" + injectors.date
 }
 
