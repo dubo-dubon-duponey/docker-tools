@@ -23,6 +23,7 @@ cakes: {
 				dockerfile: "Dockerfile.linux"
 			}
 			process: {
+				target: "runtime-tools"
 				platforms: types.#Platforms | * [
 					types.#Platforms.#AMD64,
 					types.#Platforms.#ARM64,
@@ -43,7 +44,39 @@ cakes: {
 			}
 			metadata: {
 				title: "Dubo Tools for Linux",
-				description: "Some tools collection: cue, dagger, buildctl, goello, etc",
+				description: "Runtime utils: goello, caddy, healthcheckers",
+			}
+		}
+  }
+
+	linux_dev: scullery.#Cake & {
+		recipe: {
+			input: {
+				dockerfile: "Dockerfile.linux"
+			}
+			process: {
+				target: "build-tools"
+				platforms: types.#Platforms | * [
+					types.#Platforms.#AMD64,
+					types.#Platforms.#ARM64,
+					types.#Platforms.#I386,
+					types.#Platforms.#V7,
+					types.#Platforms.#V6,
+					types.#Platforms.#PPC64LE,
+				]
+			}
+			// XXX Broke recently
+			// Possibly aggressive CFLAGS - buildctl and terraform are dead
+			// types.#Platforms.#S390X,
+			output: {
+				images: {
+					names: [...string] | * ["tools"],
+					tags: [...string] | * ["linux-dev-latest"]
+				}
+			}
+			metadata: {
+				title: "Dubo Tools for Linux",
+				description: "Dev tools collection: cue, dagger, buildctl, etc",
 			}
 		}
   }

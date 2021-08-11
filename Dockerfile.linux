@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:f492d8441ddd82cad64889d44fa67cdf3f058ca44ab896de436575045a59604c
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:a9adfa210235133d99bf06fab9a631cd6d44ee3aed6b081ad61b342fcc7d189c
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:edc80b2c8fd94647f793cbcb7125c87e8db2424f16b9fd0b8e173af850932b48
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:a49ab8a07a2da61eee63b7d9d33b091df190317aefb91203ad0ac41af18d5236
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:607d8b42af53ebbeb0064a5fd41895ab34ec670a810a704dbf53a2beb3ab769d
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:3fdb7b859e3fea12a7604ff4ae7e577628784ac1f6ea0d5609de65a4b26e5b3c
 
 ##########################################################################################################################################
 # Fetchers
@@ -13,9 +13,9 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:edc80b2
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
-ENV           GIT_REPO=github.com/moby/buildkit
-ENV           GIT_VERSION=v0.9.0
-ENV           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
+ARG           GIT_REPO=github.com/moby/buildkit
+ARG           GIT_VERSION=v0.9.0
+ARG           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -35,9 +35,9 @@ RUN           --mount=type=secret,id=CA \
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-cuelang
 
-ENV           GIT_REPO=github.com/cuelang/cue
-ENV           GIT_VERSION=v0.4.0
-ENV           GIT_COMMIT=3b0a537a2db6d49d1ae67631a31c45ad97c69078
+ARG           GIT_REPO=github.com/cuelang/cue
+ARG           GIT_VERSION=v0.4.0
+ARG           GIT_COMMIT=3b0a537a2db6d49d1ae67631a31c45ad97c69078
 
 ENV           WITH_BUILD_SOURCE="./cmd/cue"
 ENV           WITH_BUILD_OUTPUT="cue"
@@ -57,9 +57,9 @@ RUN           --mount=type=secret,id=CA \
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-dagger
 
-ENV           GIT_REPO=github.com/dagger/dagger
-ENV           GIT_VERSION=v0.1.0-alpha12
-ENV           GIT_COMMIT=b805d37cb0c6314d330a389134b37e554485b42b
+ARG           GIT_REPO=github.com/dagger/dagger
+ARG           GIT_VERSION=v0.1.0-alpha12
+ARG           GIT_COMMIT=b805d37cb0c6314d330a389134b37e554485b42b
 
 ENV           WITH_BUILD_SOURCE="./cmd/dagger"
 ENV           WITH_BUILD_OUTPUT="dagger"
@@ -78,9 +78,9 @@ RUN           --mount=type=secret,id=CA \
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
-ENV           GIT_REPO=github.com/docker/cli
-ENV           GIT_VERSION=v20.10.7
-ENV           GIT_COMMIT=f0df35096d5f5e6b559b42c7fde6c65a2909f7c5
+ARG           GIT_REPO=github.com/docker/cli
+ARG           GIT_VERSION=v20.10.7
+ARG           GIT_COMMIT=f0df35096d5f5e6b559b42c7fde6c65a2909f7c5
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -116,9 +116,9 @@ RUN           --mount=type=secret,id=CA \
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
-ENV           GIT_REPO=github.com/hashicorp/terraform
-ENV           GIT_VERSION=v1.0.3
-ENV           GIT_COMMIT=676e5c4355e9fd8bf29009576781d4adf6dc5e80
+ARG           GIT_REPO=github.com/hashicorp/terraform
+ARG           GIT_VERSION=v1.0.3
+ARG           GIT_COMMIT=676e5c4355e9fd8bf29009576781d4adf6dc5e80
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -147,9 +147,9 @@ RUN           --mount=type=secret,id=CA \
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-healthcheckers
 
-ENV           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
-ENV           GIT_VERSION=0507893
-ENV           GIT_COMMIT=05078931e52960dc287170a076e5bfb1aaca95f4
+ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
+ARG           GIT_VERSION=0507893
+ARG           GIT_COMMIT=05078931e52960dc287170a076e5bfb1aaca95f4
 
 # This one has many targets, so, let downstream decide
 ENV           WITH_BUILD_SOURCE="you_must_pick_what_you_want_to_build"
@@ -165,9 +165,13 @@ RUN           --mount=type=secret,id=CA \
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-goello
 
-ENV           GIT_REPO=github.com/dubo-dubon-duponey/goello
-ENV           GIT_VERSION=19962e4
-ENV           GIT_COMMIT=19962e48faffa5c5593860ebd7123d8ecd4bbae7
+ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
+# Last version with individual params
+#ARG           GIT_VERSION=19962e4
+#ARG           GIT_COMMIT=19962e48faffa5c5593860ebd7123d8ecd4bbae7
+ARG           GIT_VERSION=645d737
+ARG           GIT_COMMIT=645d737d6f299eca959dc2feb413f7c5fbcd8ce9
+
 
 # This one has many targets, so, let downstream decide
 ENV           WITH_BUILD_SOURCE="you_must_pick_what_you_want_to_build"
@@ -183,9 +187,9 @@ RUN           --mount=type=secret,id=CA \
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-caddy
 
-ENV           GIT_REPO=github.com/caddyserver/caddy
-ENV           GIT_VERSION=v2.4.3
-ENV           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
+ARG           GIT_REPO=github.com/caddyserver/caddy
+ARG           GIT_VERSION=v2.4.3
+ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
@@ -222,7 +226,7 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -258,7 +262,7 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -294,7 +298,7 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -330,7 +334,7 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -366,7 +370,7 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -405,7 +409,7 @@ ENV           WITH_BUILD_OUTPUT=http-health
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -430,7 +434,7 @@ ENV           WITH_BUILD_OUTPUT=rtsp-health
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -455,7 +459,7 @@ ENV           WITH_BUILD_OUTPUT=dns-health
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -494,7 +498,7 @@ ENV           WITH_BUILD_OUTPUT=goello-client
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -519,7 +523,7 @@ ENV           WITH_BUILD_OUTPUT=goello-server
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -555,7 +559,7 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 # - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
-                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
                 export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
                 export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
                 export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
@@ -599,68 +603,52 @@ RUN           chmod 555 /dist/boot/bin/*; \
               epoch="$(date --date "$BUILD_CREATED" +%s)"; \
               find /dist/boot -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +;
 
-# hadolint ignore=SC2015
-RUN           dprintf(){\
-                local msg="$1"; \
-                if [ "$msg" == "YES" ]; then tput setaf 2; printf "%s" "$msg"; tput op; printf "\n"; \
-                elif [ "$msg" == "static" ]; then tput setaf 2; printf "%s" "$msg"; tput op; printf "\n"; \
-                elif [ "$msg" == "dynamic" ]; then tput setaf 3; printf "%s" "$msg"; tput op; printf "\n"; \
-                elif [ "$msg" == "NO" ]; then tput setaf 1; printf "%s" "$msg"; tput op; printf "\n"; fi; \
-              }; \
-              eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")" 2>/dev/null)"; \
-              for i in /dist/boot/bin/*; do \
-                hc="$(hardening-check "$i" 2>/dev/null || true)"; \
-                re="$(readelf -d "$i")"; \
-                echo "------------------------------"; \
-                echo "Auditing: $i"; \
-                echo "------------------------------"; \
-                printf "Dynamic or static? "; \
-                hasDYN="$(readelf -p .interp "$i" 2>/dev/null)"; [ "$hasDYN" ] && dprintf dynamic || dprintf static; \
-                printf "Bind now? "; \
-                printf "%s" "$re" | grep -q "BIND_NOW" && dprintf YES || dprintf NO;\
-                printf "PIE? "; \
-                printf "%s" "$re" | grep -q "PIE" && dprintf YES || dprintf NO;\
-                printf "Stack protected? "; \
-                printf "%s" "$hc" | grep "Stack protected" | grep -q yes && dprintf YES || dprintf NO; \
-                printf "Fortified? "; \
-                printf "%s" "$hc" | grep "Fortify Source functions" | grep -q yes && dprintf YES || dprintf NO; \
-                printf "RO relocations? "; \
-                printf "%s" "$hc" | grep "Read-only relocations" | grep -q yes && dprintf YES || dprintf NO; \
-                echo "If dynamic, dependencies:"; \
-                printf "%s" "$re" | grep "(NEEDED)" || true;\
-                echo "INFORMATIVE: file & hardening raw output:"; \
-                file "$i" || true; \
-                printf "%s\n" "$hc"; \
-                { \
-                  printf "Running? "; \
-                  "$i" "--version" >/dev/null 2>&1 || "$i" version >/dev/null 2>&1; \
-                } && dprintf "YES" || { dprintf "NO"; "$i" --version; "$i" version; exit 1; }; \
-              done
-
 # XXX below four stages are provisional for future (splitting this into two images) as this is just obnoxious to compile
-FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS auditing-runtime-tools
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS assembly-runtime-tools
 
 ARG           TARGETARCH
-ARG           TARGETVARIANT
 
 COPY          --from=builder-healthcheckers /dist /dist
 COPY          --from=builder-goello         /dist /dist
 COPY          --from=builder-caddy          /dist /dist
+
+#              export BIND_NOW=true; \
+#              export PIE=true; \
+#              export FORTIFIED=true; \
+#              export STACK_PROTECTED=true; \
+#              export RO_RELOCATIONS=true; \
+
+#RUN           [ "$TARGETARCH" != "amd64" ] || export STACK_CLASH=true; \
+RUN           export RUNNING=true; \
+              export NO_SYSTEM_LINK=true; \
+              for binary in /dist/boot/bin/*; do \
+                dubo-check validate "$binary"; \
+              done
 
 RUN           chmod 555 /dist/boot/bin/*; \
               epoch="$(date --date "$BUILD_CREATED" +%s)"; \
               find /dist -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +;
 
 
-FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS auditing-build-tools
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS assembly-build-tools
 
 ARG           TARGETARCH
-ARG           TARGETVARIANT
 
 COPY          --from=builder-buildctl   /dist /dist
 COPY          --from=builder-cuelang    /dist /dist
 COPY          --from=builder-docker     /dist /dist
 COPY          --from=builder-terraform  /dist /dist
+
+RUN           [ "$TARGETARCH" != "amd64" ] || export STACK_CLASH=true; \
+              export BIND_NOW=true; \
+              export PIE=true; \
+              export FORTIFIED=true; \
+              export STACK_PROTECTED=true; \
+              export RO_RELOCATIONS=true; \
+              export NO_SYSTEM_LINK=true; \
+              for binary in /dist/boot/bin/*; do \
+                dubo-check validate "$binary"; \
+              done
 
 RUN           chmod 555 /dist/boot/bin/*; \
               epoch="$(date --date "$BUILD_CREATED" +%s)"; \
@@ -668,11 +656,11 @@ RUN           chmod 555 /dist/boot/bin/*; \
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                                                        AS runtime-tools
 
-COPY          --from=auditing-runtime-tools --chown=$BUILD_UID:root /dist /
+COPY          --from=assembly-runtime-tools --chown=$BUILD_UID:root /dist /
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                                                        AS build-tools
 
-COPY          --from=auditing-build-tools   --chown=$BUILD_UID:root /dist /
+COPY          --from=assembly-build-tools   --chown=$BUILD_UID:root /dist /
 
 #######################
 # Running image
