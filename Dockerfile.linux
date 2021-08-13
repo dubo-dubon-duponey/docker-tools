@@ -646,15 +646,14 @@ COPY          --from=builder-cuelang    /dist /dist
 COPY          --from=builder-docker     /dist /dist
 COPY          --from=builder-terraform  /dist /dist
 
-RUN           [ "$TARGETARCH" != "amd64" ] || export STACK_CLASH=true; \
-              RUNNING=true \
-              BIND_NOW=true \
-              PIE=true \
-              STACK_PROTECTED=true \
-              FORTIFIED=true \
-              RO_RELOCATIONS=true \
-              NO_SYSTEM_LINK=true \
-              STATIC=true \
+# RUN           [ "$TARGETARCH" != "amd64" ] || export STACK_CLASH=true; \
+RUN           export RUNNING=true; \
+              export BIND_NOW=true; \
+              export PIE=true; \
+              export STACK_PROTECTED=true; \
+              export FORTIFIED=true; \
+              export RO_RELOCATIONS=true; \
+              export NO_SYSTEM_LINK=true; \
               for binary in /dist/boot/bin/*; do \
                 dubo-check validate "$binary"; \
               done
