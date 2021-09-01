@@ -49,17 +49,6 @@ RUN           --mount=type=secret,uid=100,id=CA \
                 python3=3.9.2-3 && \
               rm -rf /var/lib/apt/lists/*
 
-# hadolint ignore=DL3010
-COPY          ./cache/MacOSX*.sdk.tar.xz ./tarballs
-RUN           UNATTENDED=1 ./build.sh
-
-WORKDIR       /source
-ENV           CC="o64-clang"
-ENV           CXX="o64-clang++"
-ENV           PATH="/tools/osxcross/target/bin:$PATH"
-ENV           MACOSX_DEPLOYMENT_TARGET=10.11
-ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
-
 # Unsupported by clang: -mcet -fstack-clash-protection
 ENV           WARNING_OPTIONS="-Werror=implicit-function-declaration -Werror=format-security -Wall"
 ENV           OPTIMIZATION_OPTIONS="-O3"
@@ -71,6 +60,17 @@ ENV           COMPILER_OPTIONS="-pipe -fexceptions -fstack-protector-strong -fcf
 ENV           LDFLAGS=""
 ENV           CFLAGS="$WARNING_OPTIONS $OPTIMIZATION_OPTIONS $DEBUGGING_OPTIONS $PREPROCESSOR_OPTIONS $COMPILER_OPTIONS"
 ENV           CXXFLAGS="$CFLAGS"
+
+# hadolint ignore=DL3010
+COPY          ./cache/MacOSX*.sdk.tar.xz ./tarballs
+RUN           UNATTENDED=1 ./build.sh
+
+WORKDIR       /source
+ENV           CC="o64-clang"
+ENV           CXX="o64-clang++"
+ENV           PATH="/tools/osxcross/target/bin:$PATH"
+ENV           MACOSX_DEPLOYMENT_TARGET=10.11
+ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
 
 ##########################################################################################################################################
 # Fetchers
