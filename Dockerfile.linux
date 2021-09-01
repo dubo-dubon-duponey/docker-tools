@@ -195,8 +195,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-caddy
 
 ARG           GIT_REPO=github.com/caddyserver/caddy
-ARG           GIT_VERSION=v2.4.4
-ARG           GIT_COMMIT=f43fd6f3884d957afc391da3ca689a43ba27eccb
+ARG           GIT_VERSION=v2.4.3
+ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
