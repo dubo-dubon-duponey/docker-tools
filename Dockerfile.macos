@@ -43,7 +43,7 @@ RUN           --mount=type=secret,uid=100,id=CA \
                 libxml2-dev=2.9.10+dfsg-6.7 \
                 cmake=3.18.4-2 \
                 patch=2.7.6-7 \
-                libssl-dev=1.1.1k-1 \
+                libssl-dev=1.1.1k-1+deb11u1 \
                 clang=1:11.0-51+nmu5 \
                 lld=1:11.0-51+nmu5 \
                 python3=3.9.2-3 && \
