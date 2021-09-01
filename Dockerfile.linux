@@ -85,8 +85,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.7
-ARG           GIT_COMMIT=f0df35096d5f5e6b559b42c7fde6c65a2909f7c5
+ARG           GIT_VERSION=v20.10.8
+ARG           GIT_COMMIT=3967b7d28e15a020e4ee344283128ead633b3e0c
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -124,8 +124,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.0.3
-ARG           GIT_COMMIT=676e5c4355e9fd8bf29009576781d4adf6dc5e80
+ARG           GIT_VERSION=v1.0.5
+ARG           GIT_COMMIT=1fc7ee138bb9f234d8bae275e7d3b8dae2fc5a4c
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -195,8 +195,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-caddy
 
 ARG           GIT_REPO=github.com/caddyserver/caddy
-ARG           GIT_VERSION=v2.4.3
-ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
+ARG           GIT_VERSION=v2.4.4
+ARG           GIT_COMMIT=f43fd6f3884d957afc391da3ca689a43ba27eccb
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
