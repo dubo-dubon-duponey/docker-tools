@@ -217,8 +217,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-goello
 
 ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
-ARG           GIT_VERSION=645d737
-ARG           GIT_COMMIT=645d737d6f299eca959dc2feb413f7c5fbcd8ce9
+ARG           GIT_VERSION=a2e1b1a
+ARG           GIT_COMMIT=a2e1b1a0fa4331c460cf124daf9f155b26508e22
 
 # This one has many targets, so, let downstream decide
 ENV           ENABLE_PIE=true
@@ -236,6 +236,7 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-caddy
 
 ARG           GIT_REPO=github.com/caddyserver/caddy
+# 2.4.5 need tweak to scep (minor version bump), but then the build segfaults
 ARG           GIT_VERSION=v2.4.3
 ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 
@@ -244,6 +245,12 @@ ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
 
 RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+
+# scep v2.0.0 checksum does not match anymore
+# It's unclear whether the rename of the module to v2 is responsible, but one way or the other this
+# *critical* module is suspicious
+# RUN           echo "replace github.com/micromdm/scep/v2 v2.0.0 => github.com/micromdm/scep/v2 v2.1.0" >> go.mod
+
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
