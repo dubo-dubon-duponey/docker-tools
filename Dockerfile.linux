@@ -251,9 +251,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -287,9 +284,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -323,9 +317,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -359,9 +350,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -395,9 +383,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -434,9 +419,6 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 ENV           WITH_BUILD_SOURCE=./cmd/http
 ENV           WITH_BUILD_OUTPUT=http-health
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -459,9 +441,6 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 ENV           WITH_BUILD_SOURCE=./cmd/rtsp
 ENV           WITH_BUILD_OUTPUT=rtsp-health
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -484,9 +463,6 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 ENV           WITH_BUILD_SOURCE=./cmd/dns
 ENV           WITH_BUILD_OUTPUT=dns-health
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -523,9 +499,6 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 ENV           WITH_BUILD_SOURCE=./cmd/client
 ENV           WITH_BUILD_OUTPUT=goello-client
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -603,9 +576,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -639,9 +609,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
