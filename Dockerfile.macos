@@ -381,6 +381,26 @@ RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
               go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 #######################
+# Goello
+#######################
+FROM          fetcher-goello                                                                                            AS builder-goello-server-ng
+
+ENV           WITH_BUILD_SOURCE=./cmd/server-ng
+ENV           WITH_BUILD_OUTPUT=goello-server-ng
+
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
+
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
+
+#######################
 # Caddy
 #######################
 FROM          fetcher-caddy                                                                                             AS builder-caddy
@@ -403,6 +423,7 @@ RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS builder
 
 COPY          --from=builder-goello-client /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-goello-server /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-goello-server-ng /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-caddy /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-buildctl /dist/boot/bin /dist/boot/bin
