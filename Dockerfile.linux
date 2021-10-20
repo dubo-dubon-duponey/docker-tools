@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-10-15@sha256:33e021267790132e63be2cea08e77d64ec5d0434355734e94f8ff2d90c6f8944
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-10-15@sha256:eb822683575d68ccbdf62b092e1715c676b9650a695d8c0235db4ed5de3e8534
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-10-15@sha256:7072702dab130c1bbff5e5c4a0adac9c9f2ef59614f24e7ee43d8730fae2764c
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-10-15@sha256:1609d1af44c0048ec0f2e208e6d4e6a525c6d6b1c0afcc9d71fccf985a8b0643
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-10-15@sha256:2c95e3bf69bc3a463b00f3f199e0dc01cab773b6a0f583904ba6766b3401cb7b
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-10-15@sha256:5c54594a24e3dde2a82e2027edd6d04832204157e33775edc66f716fa938abba
 
 ##########################################################################################################################################
 # Fetchers
@@ -14,8 +14,8 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-10-15@sha256:7072702
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.9.0
-ARG           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
+ARG           GIT_VERSION=v0.9.1
+ARG           GIT_COMMIT=966bcf4aa3ef397a9d6025fade18f2d59a5bf29d
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -85,8 +85,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.8
-ARG           GIT_COMMIT=3967b7d28e15a020e4ee344283128ead633b3e0c
+ARG           GIT_VERSION=v20.10.9
+ARG           GIT_COMMIT=c2ea9bc90bacf19bdbe37fd13eec8772432aca99
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -123,8 +123,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.0.5
-ARG           GIT_COMMIT=1fc7ee138bb9f234d8bae275e7d3b8dae2fc5a4c
+ARG           GIT_VERSION=v1.0.9
+ARG           GIT_COMMIT=cdf8299ce27e1bfa7782d8ea7d7334c38fae9315
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -175,8 +175,8 @@ ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
 # Last version with individual params
 #ARG           GIT_VERSION=19962e4
 #ARG           GIT_COMMIT=19962e48faffa5c5593860ebd7123d8ecd4bbae7
-ARG           GIT_VERSION=a2e1b1a
-ARG           GIT_COMMIT=a2e1b1a0fa4331c460cf124daf9f155b26508e22
+ARG           GIT_VERSION=68949ef
+ARG           GIT_COMMIT=68949efecc02d76b9b7c3734d1ba72a400fe9208
 
 
 # This one has many targets, so, let downstream decide
@@ -212,13 +212,13 @@ RUN           --mount=type=secret,id=CA \
 
 
 #######################
-# Fetcher: caddy
+# Fetcher: nerdctl
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
 
 ARG           GIT_REPO=github.com/containerd/nerdctl
-ARG           GIT_VERSION=v0.11.2
-ARG           GIT_COMMIT=d1641120d48d8b81671179322ba37494ff4e9e76
+ARG           GIT_VERSION=v0.12.1
+ARG           GIT_COMMIT=6f0c8b7bc63270404c9f5810a899e6bae7546608
 
 ENV           WITH_BUILD_SOURCE="./cmd/nerdctl"
 ENV           WITH_BUILD_OUTPUT="nerdctl"
