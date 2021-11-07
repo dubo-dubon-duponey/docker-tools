@@ -7,8 +7,8 @@ ARG           FROM_IMAGE_RUNTIME=scratch
 FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS osx-cross
 
 ARG           GIT_REPO=github.com/tpoechtrager/osxcross
-ARG           GIT_VERSION=de6ec57
-ARG           GIT_COMMIT=de6ec57895713a090fee05cbc58e43b5d916ba33
+ARG           GIT_VERSION=e59a634
+ARG           GIT_COMMIT=e59a63461da2cbc20cb0a5bbfc954730e50a5472
 
 WORKDIR       /tools/osxcross
 RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
@@ -82,8 +82,8 @@ ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.9.1
-ARG           GIT_COMMIT=966bcf4aa3ef397a9d6025fade18f2d59a5bf29d
+ARG           GIT_VERSION=v0.9.2
+ARG           GIT_COMMIT=a14b4e097ae1dc7514c5febd6d75f742a166ea75
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -150,8 +150,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.9
-ARG           GIT_COMMIT=c2ea9bc90bacf19bdbe37fd13eec8772432aca99
+ARG           GIT_VERSION=v20.10.10
+ARG           GIT_COMMIT=b485636f4b90ed5a91a1f403e65ffced469c641a
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -187,8 +187,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.0.9
-ARG           GIT_COMMIT=cdf8299ce27e1bfa7782d8ea7d7334c38fae9315
+ARG           GIT_VERSION=v1.0.10
+ARG           GIT_COMMIT=71f77c867fe56af1db774d10cf86a2bca216a2ce
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
