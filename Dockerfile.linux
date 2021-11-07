@@ -217,8 +217,11 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
 
 ARG           GIT_REPO=github.com/containerd/nerdctl
-ARG           GIT_VERSION=v0.13.0
-ARG           GIT_COMMIT=08792cc09464b13b4fe97ca1bf06a9ac3e696fde
+ARG           GIT_VERSION=v0.12.1
+ARG           GIT_COMMIT=6f0c8b7bc63270404c9f5810a899e6bae7546608
+# Broken dependency...
+#ARG           GIT_VERSION=v0.13.0
+#ARG           GIT_COMMIT=08792cc09464b13b4fe97ca1bf06a9ac3e696fde
 
 ENV           WITH_BUILD_SOURCE="./cmd/nerdctl"
 ENV           WITH_BUILD_OUTPUT="nerdctl"
