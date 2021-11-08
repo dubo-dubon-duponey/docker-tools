@@ -16,6 +16,7 @@ RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout
 
 FROM          osx-cross                                                                                                 AS builder-sdk
 
+# XXX parameterize this
 RUN           --mount=type=bind,target=/SDKs \
               ln -s /SDKs ./Packages; \
               XCODEDIR=. ./tools/gen_sdk_package.sh
@@ -63,7 +64,7 @@ ENV           CXXFLAGS="$CFLAGS"
 
 # hadolint ignore=DL3010
 COPY          ./cache/MacOSX*.sdk.tar.xz ./tarballs
-RUN           UNATTENDED=1 ./build.sh
+RUN           SDK_VERSION=12.0 OSX_VERSION_MIN=10.13 UNATTENDED=1 ./build.sh
 
 WORKDIR       /source
 ENV           CC="o64-clang"
