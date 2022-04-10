@@ -1,7 +1,7 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-04-01@sha256:baacea4119ee8b7029b2f495e5e73f59d662803570ba07c7e3680f65b9a8ad33
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-04-01@sha256:3b15acd032f2c943d15e64ac06508ec367b6ab284747aca5ada756ce9cbd26a4
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-04-01@sha256:be2221f0ee6fb95b6756bbef992b8e20b8e5cdce97a38d335be3d9d7253df554
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-04-01@sha256:ca513bf0219f654afeb2d24aae233fef99cbcb01991aea64060f3414ac792b3f
 ARG           FROM_IMAGE_RUNTIME=scratch
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS osx-cross
@@ -41,10 +41,10 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
                 lzma-dev=9.22-2.2 \
-                libxml2-dev=2.9.10+dfsg-6.7 \
+                libxml2-dev=2.9.10+dfsg-6.7+deb11u1 \
                 cmake=3.18.4-2+deb11u1 \
                 patch=2.7.6-7 \
-                libssl-dev=1.1.1k-1+deb11u1 \
+                libssl-dev=1.1.1k-1+deb11u2 \
                 clang=1:11.0-51+nmu5 \
                 lld=1:11.0-51+nmu5 \
                 python3=3.9.2-3 && \
@@ -83,8 +83,8 @@ ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.9.3
-ARG           GIT_COMMIT=8d2625494a6a3d413e3d875a2ff7dd9b1ed1b1a9
+ARG           GIT_VERSION=v0.10.1
+ARG           GIT_COMMIT=5bc9c7b15891eecab8d1e0c34ed62a0177c45ae7
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -129,8 +129,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-dagger
 
 ARG           GIT_REPO=github.com/dagger/dagger
-ARG           GIT_VERSION=v0.1.0-alpha12
-ARG           GIT_COMMIT=b805d37cb0c6314d330a389134b37e554485b42b
+ARG           GIT_VERSION=v0.2.5
+ARG           GIT_COMMIT=7d2f279c59ddf18e62d065001490e4edb263adea
 
 ENV           WITH_BUILD_SOURCE="./cmd/dagger"
 ENV           WITH_BUILD_OUTPUT="dagger"
@@ -151,8 +151,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.12
-ARG           GIT_COMMIT=e91ed5707e038b02af3b5120fa0835c5bedfd42e
+ARG           GIT_VERSION=v20.10.14
+ARG           GIT_COMMIT=a224086349269551becacce16e5842ceeb2a98d6
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -188,8 +188,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.0.10
-ARG           GIT_COMMIT=71f77c867fe56af1db774d10cf86a2bca216a2ce
+ARG           GIT_VERSION=v1.1.8
+ARG           GIT_COMMIT=9f4147d15fb6a2b4961cb8f292c374900728ee89
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -238,8 +238,10 @@ FROM          --platform=$BUILDPLATFORM builder-cross                           
 
 ARG           GIT_REPO=github.com/caddyserver/caddy
 # 2.4.5 need tweak to scep (minor version bump), but then the build segfaults
-ARG           GIT_VERSION=v2.4.3
-ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
+#ARG           GIT_VERSION=v2.4.3
+#ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
+ARG           GIT_VERSION=v2.4.6
+ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
 
 ENV           ENABLE_PIE=true
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
