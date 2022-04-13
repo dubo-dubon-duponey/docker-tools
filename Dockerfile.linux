@@ -1,6 +1,6 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-04-01@sha256:be2221f0ee6fb95b6756bbef992b8e20b8e5cdce97a38d335be3d9d7253df554
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-04-01@sha256:d73bb6ea84152c42e314bc9bff6388d0df6d01e277bd238ee0e6f8ade721856d
 ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-04-01@sha256:ca513bf0219f654afeb2d24aae233fef99cbcb01991aea64060f3414ac792b3f
 ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-04-01@sha256:6456b76dd2eedf34b4c5c997f9ad92901220dfdd405ec63419d0b54b6d85a777
 
@@ -14,8 +14,11 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-04-01@sha256:6456b76
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.10.1
-ARG           GIT_COMMIT=5bc9c7b15891eecab8d1e0c34ed62a0177c45ae7
+# Broken on distribution v2.8.0
+#ARG           GIT_VERSION=v0.10.1
+#ARG           GIT_COMMIT=5bc9c7b15891eecab8d1e0c34ed62a0177c45ae7
+ARG           GIT_VERSION=86c33b6
+ARG           GIT_COMMIT=86c33b66e176a6fc74b88d6f46798d3ec18e2e73
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
