@@ -14,11 +14,10 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-05-01@sha256:5e44963
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-# Broken on distribution v2.8.0
-#ARG           GIT_VERSION=v0.10.1
-#ARG           GIT_COMMIT=5bc9c7b15891eecab8d1e0c34ed62a0177c45ae7
-ARG           GIT_VERSION=86c33b6
-ARG           GIT_COMMIT=86c33b66e176a6fc74b88d6f46798d3ec18e2e73
+ARG           GIT_VERSION=v0.10.3
+ARG           GIT_COMMIT=c8d25d9a103b70dc300a4fd55e7e576472284e31
+#ARG           GIT_VERSION=354e4f6
+#ARG           GIT_COMMIT=354e4f6e6b2008a6690b1675279e6bd2e445d492
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -65,8 +64,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-dagger
 
 ARG           GIT_REPO=github.com/dagger/dagger
-ARG           GIT_VERSION=v0.2.5
-ARG           GIT_COMMIT=7d2f279c59ddf18e62d065001490e4edb263adea
+ARG           GIT_VERSION=v0.2.12
+ARG           GIT_COMMIT=21a15a8468bd19927d6f4e9c79d1b93d76421ad6
 
 ENV           WITH_BUILD_SOURCE="./cmd/dagger"
 ENV           WITH_BUILD_OUTPUT="dagger"
@@ -88,8 +87,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.14
-ARG           GIT_COMMIT=a224086349269551becacce16e5842ceeb2a98d6
+ARG           GIT_VERSION=v20.10.16
+ARG           GIT_COMMIT=aa7e414fdcb23a66e8fabbef0a560ef1769eace5
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -126,8 +125,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.1.8
-ARG           GIT_COMMIT=9f4147d15fb6a2b4961cb8f292c374900728ee89
+ARG           GIT_VERSION=v1.2.1
+ARG           GIT_COMMIT=7b5d65d492cfa8b3b5a0fb47b86f6740a2799801
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -223,8 +222,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
 
 ARG           GIT_REPO=github.com/containerd/nerdctl
-ARG           GIT_VERSION=v0.18.0
-ARG           GIT_COMMIT=77276ff0fffad3f855ab9f2f5a4ad5527ef76485
+ARG           GIT_VERSION=v0.20.0
+ARG           GIT_COMMIT=e77e05b5fd252274e3727e0439e9a2d45622ccb9
 # Broken dependency...
 #ARG           GIT_VERSION=v0.13.0
 #ARG           GIT_COMMIT=08792cc09464b13b4fe97ca1bf06a9ac3e696fde
