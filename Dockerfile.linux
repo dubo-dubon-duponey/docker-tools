@@ -64,8 +64,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-dagger
 
 ARG           GIT_REPO=github.com/dagger/dagger
-ARG           GIT_VERSION=v0.2.12
-ARG           GIT_COMMIT=21a15a8468bd19927d6f4e9c79d1b93d76421ad6
+ARG           GIT_VERSION=v0.2.30
+ARG           GIT_COMMIT=520d4b1accc68724ddebd342dff0d55358a83811
 
 ENV           WITH_BUILD_SOURCE="./cmd/dagger"
 ENV           WITH_BUILD_OUTPUT="dagger"
@@ -87,8 +87,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.16
-ARG           GIT_COMMIT=aa7e414fdcb23a66e8fabbef0a560ef1769eace5
+ARG           GIT_VERSION=v20.10.17
+ARG           GIT_COMMIT=100c70180fde3601def79a59cc3e996aa553c9b9
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -125,8 +125,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.2.1
-ARG           GIT_COMMIT=7b5d65d492cfa8b3b5a0fb47b86f6740a2799801
+ARG           GIT_VERSION=v1.2.7
+ARG           GIT_COMMIT=5df80afd40933499434bf6de3b205614edc287f4
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -222,11 +222,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
 
 ARG           GIT_REPO=github.com/containerd/nerdctl
-ARG           GIT_VERSION=v0.20.0
-ARG           GIT_COMMIT=e77e05b5fd252274e3727e0439e9a2d45622ccb9
-# Broken dependency...
-#ARG           GIT_VERSION=v0.13.0
-#ARG           GIT_COMMIT=08792cc09464b13b4fe97ca1bf06a9ac3e696fde
+ARG           GIT_VERSION=v0.22.2
+ARG           GIT_COMMIT=2899222cb0715f1e5ffe356d10c3439ee8ee3ba4
 
 ENV           WITH_BUILD_SOURCE="./cmd/nerdctl"
 ENV           WITH_BUILD_OUTPUT="nerdctl"
