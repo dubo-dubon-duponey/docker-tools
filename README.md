@@ -13,6 +13,6 @@ List:
 * healtcheckers (http, dns, rtsp)
 
 Published as:
-* ghcr.io/dubo-dubon-duponey/tools:linux-2021-11-01
-* ghcr.io/dubo-dubon-duponey/tools:linux-dev-2021-11-01
-* ghcr.io/dubo-dubon-duponey/tools:macos-2021-11-01
+* index.docker.io/dubodubonduponey/tools:linux-2021-11-01
+* index.docker.io/dubodubonduponey/tools:linux-dev-2021-11-01
+* index.docker.io/dubodubonduponey/tools:macos-2021-11-01

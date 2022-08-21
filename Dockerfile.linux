@@ -1,8 +1,8 @@
-ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+ARG           FROM_REGISTRY=index.docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-06-01@sha256:3fe68fe3e3eb1c295bd5213cc4a296e929ab59c139ba1a55a04f716c352229ee
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-06-01@sha256:a2f2097b9b24c3650e149acb25719f72e56b01df139f120fc1f783d46260a8ce
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-06-01@sha256:fe875fbfa104beb7afbcfafe3d8ab9b3640c7d25a0ea285a76bf3d71ca216300
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-08-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-08-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-08-01
 
 ##########################################################################################################################################
 # Fetchers
