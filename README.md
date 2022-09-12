@@ -13,6 +13,6 @@ List:
 * healtcheckers (http, dns, rtsp)
 
 Published as:
-* index.docker.io/dubodubonduponey/tools:linux-2021-11-01
-* index.docker.io/dubodubonduponey/tools:linux-dev-2021-11-01
-* index.docker.io/dubodubonduponey/tools:macos-2021-11-01
+* docker.io/dubodubonduponey/tools:linux-2022-09-01
+* docker.io/dubodubonduponey/tools:linux-dev-2022-09-01
+* docker.io/dubodubonduponey/tools:macos-2022-09-01

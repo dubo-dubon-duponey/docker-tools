@@ -1,7 +1,7 @@
-ARG           FROM_REGISTRY=index.docker.io/dubodubonduponey
+ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-08-01
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-08-01
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-09-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-09-01
 ARG           FROM_IMAGE_RUNTIME=scratch
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS osx-cross

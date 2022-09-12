@@ -7,9 +7,9 @@ readonly root
 
 # Simple no-thrill build tester
 if ! "$root/hack/build.sh" \
-    --inject registry="index.docker.io/dubodubonduponey" \
+    --inject registry="docker.io/dubodubonduponey" \
     --inject progress=plain \
-	  --inject date=2021-11-01 \
+	  --inject date=2022-09-01 \
 	  --inject suite=bullseye \
     --inject platforms=linux/amd64,linux/arm64 \
   	"linux" "$@"; then
