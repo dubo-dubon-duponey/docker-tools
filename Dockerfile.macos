@@ -83,8 +83,8 @@ ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.10.3
-ARG           GIT_COMMIT=c8d25d9a103b70dc300a4fd55e7e576472284e31
+ARG           GIT_VERSION=v0.10.4
+ARG           GIT_COMMIT=a2ba6869363812a210fcc3ded6926757ab780b5f
 #ARG           GIT_VERSION=354e4f6
 #ARG           GIT_COMMIT=354e4f6e6b2008a6690b1675279e6bd2e445d492
 
