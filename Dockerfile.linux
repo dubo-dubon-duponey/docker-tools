@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-09-01
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-09-01
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-09-01
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-12-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-12-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-12-01
 
 ##########################################################################################################################################
 # Fetchers
@@ -14,8 +14,8 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-09-01
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.10.4
-ARG           GIT_COMMIT=a2ba6869363812a210fcc3ded6926757ab780b5f
+ARG           GIT_VERSION=v0.10.6
+ARG           GIT_COMMIT=0c9b5aeb269c740650786ba77d882b0259415ec7
 #ARG           GIT_VERSION=354e4f6
 #ARG           GIT_COMMIT=354e4f6e6b2008a6690b1675279e6bd2e445d492
 
@@ -87,8 +87,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.17
-ARG           GIT_COMMIT=100c70180fde3601def79a59cc3e996aa553c9b9
+ARG           GIT_VERSION=v20.10.22
+ARG           GIT_COMMIT=3a2c30b63ab20acfcc3f3550ea756a0561655a77
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -125,8 +125,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.2.7
-ARG           GIT_COMMIT=5df80afd40933499434bf6de3b205614edc287f4
+ARG           GIT_VERSION=v1.3.6
+ARG           GIT_COMMIT=603f48b2a1e27f102e4f53c0fae53cd591bb03ae
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -196,18 +196,24 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-caddy
 
 ARG           GIT_REPO=github.com/caddyserver/caddy
+# Works until < go1.8
+#ARG           GIT_VERSION=v2.4.3
+#ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 # 2.4.5 need tweak to scep (minor version bump), but then the build segfaults
-ARG           GIT_VERSION=v2.4.3
-ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 # 2.4.6 segfaults
 #ARG           GIT_VERSION=v2.4.6
 #ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
+#ARG           GIT_VERSION=v2.5.2
+#ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
+ARG           GIT_VERSION=v2.6.2
+ARG           GIT_COMMIT=6bad878a22e048762262d6fabe2144cefaf4ca81
+
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
 
 ENV           CGO_ENABLED=1
-ENV           ENABLE_STATIC=true
+#ENV           ENABLE_STATIC=true
 # ENV           ENABLE_PIE=true
 
 RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
@@ -222,8 +228,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
 
 ARG           GIT_REPO=github.com/containerd/nerdctl
-ARG           GIT_VERSION=v0.22.2
-ARG           GIT_COMMIT=2899222cb0715f1e5ffe356d10c3439ee8ee3ba4
+ARG           GIT_VERSION=v1.1.0
+ARG           GIT_COMMIT=18944bc70784dfa83010d37054d75487a58ab581
 
 ENV           WITH_BUILD_SOURCE="./cmd/nerdctl"
 ENV           WITH_BUILD_OUTPUT="nerdctl"

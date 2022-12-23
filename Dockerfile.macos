@@ -1,14 +1,14 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-09-01
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-09-01
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-12-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-12-01
 ARG           FROM_IMAGE_RUNTIME=scratch
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS osx-cross
 
 ARG           GIT_REPO=github.com/tpoechtrager/osxcross
-ARG           GIT_VERSION=17bb5e2
-ARG           GIT_COMMIT=17bb5e2d0a46533c1dd525cf4e9a80d88bd9f00e
+ARG           GIT_VERSION=50e86eb
+ARG           GIT_COMMIT=50e86ebca7d14372febd0af8cd098705049161b9
 
 WORKDIR       /tools/osxcross
 RUN           git clone --recurse-submodules https://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
@@ -41,7 +41,7 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
                 lzma-dev=9.22-2.2 \
-                libxml2-dev=2.9.10+dfsg-6.7+deb11u2 \
+                libxml2-dev=2.9.10+dfsg-6.7+deb11u3 \
                 cmake=3.18.4-2+deb11u1 \
                 clang=1:11.0-51+nmu5 \
                 lld=1:11.0-51+nmu5 \
@@ -83,8 +83,8 @@ ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.10.4
-ARG           GIT_COMMIT=a2ba6869363812a210fcc3ded6926757ab780b5f
+ARG           GIT_VERSION=v0.10.6
+ARG           GIT_COMMIT=0c9b5aeb269c740650786ba77d882b0259415ec7
 #ARG           GIT_VERSION=354e4f6
 #ARG           GIT_COMMIT=354e4f6e6b2008a6690b1675279e6bd2e445d492
 
@@ -153,8 +153,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.17
-ARG           GIT_COMMIT=100c70180fde3601def79a59cc3e996aa553c9b9
+ARG           GIT_VERSION=v20.10.22
+ARG           GIT_COMMIT=3a2c30b63ab20acfcc3f3550ea756a0561655a77
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -190,8 +190,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.2.7
-ARG           GIT_COMMIT=5df80afd40933499434bf6de3b205614edc287f4
+ARG           GIT_VERSION=v1.3.6
+ARG           GIT_COMMIT=603f48b2a1e27f102e4f53c0fae53cd591bb03ae
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -239,12 +239,17 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-caddy
 
 ARG           GIT_REPO=github.com/caddyserver/caddy
+# Works until < go1.8
+#ARG           GIT_VERSION=v2.4.3
+#ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 # 2.4.5 need tweak to scep (minor version bump), but then the build segfaults
-ARG           GIT_VERSION=v2.4.3
-ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 # 2.4.6 segfaults
 #ARG           GIT_VERSION=v2.4.6
 #ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
+#ARG           GIT_VERSION=v2.5.2
+#ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
+ARG           GIT_VERSION=v2.6.2
+ARG           GIT_COMMIT=6bad878a22e048762262d6fabe2144cefaf4ca81
 
 ENV           ENABLE_PIE=true
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
