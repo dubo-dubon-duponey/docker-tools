@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-12-01
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-12-01
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-12-01
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2023-09-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2023-09-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2023-09-01
 
 ##########################################################################################################################################
 # Fetchers
@@ -14,8 +14,8 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-12-01
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.10.6
-ARG           GIT_COMMIT=0c9b5aeb269c740650786ba77d882b0259415ec7
+ARG           GIT_VERSION=v0.12.2
+ARG           GIT_COMMIT=567a99433ca23402d5e9b9f9124005d2e59b8861
 #ARG           GIT_VERSION=354e4f6
 #ARG           GIT_COMMIT=354e4f6e6b2008a6690b1675279e6bd2e445d492
 
@@ -64,8 +64,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-dagger
 
 ARG           GIT_REPO=github.com/dagger/dagger
-ARG           GIT_VERSION=v0.2.30
-ARG           GIT_COMMIT=520d4b1accc68724ddebd342dff0d55358a83811
+ARG           GIT_VERSION=v0.6.4
+ARG           GIT_COMMIT=0889c0961c764fc9fbd7cdecb67e5ba388a6ca01
 
 ENV           WITH_BUILD_SOURCE="./cmd/dagger"
 ENV           WITH_BUILD_OUTPUT="dagger"
@@ -87,8 +87,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.22
-ARG           GIT_COMMIT=3a2c30b63ab20acfcc3f3550ea756a0561655a77
+ARG           GIT_VERSION=v20.10.25
+ARG           GIT_COMMIT=b82b9f3a0e763304a250531cb9350aa6d93723c9
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -125,8 +125,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.3.6
-ARG           GIT_COMMIT=603f48b2a1e27f102e4f53c0fae53cd591bb03ae
+ARG           GIT_VERSION=v1.5.7
+ARG           GIT_COMMIT=ee58ac1851c8a433005df9863ed47796a9f6b5e7
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -205,8 +205,8 @@ ARG           GIT_REPO=github.com/caddyserver/caddy
 #ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
 #ARG           GIT_VERSION=v2.5.2
 #ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
-ARG           GIT_VERSION=v2.6.2
-ARG           GIT_COMMIT=6bad878a22e048762262d6fabe2144cefaf4ca81
+ARG           GIT_VERSION=v2.7.4
+ARG           GIT_COMMIT=f11c3c9f5a1be082450d64369853e1dacda22dde
 
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
@@ -228,8 +228,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
 
 ARG           GIT_REPO=github.com/containerd/nerdctl
-ARG           GIT_VERSION=v1.1.0
-ARG           GIT_COMMIT=18944bc70784dfa83010d37054d75487a58ab581
+ARG           GIT_VERSION=v1.5.0
+ARG           GIT_COMMIT=b33a58f288bc42351404a016e694190b897cd252
 
 ENV           WITH_BUILD_SOURCE="./cmd/nerdctl"
 ENV           WITH_BUILD_OUTPUT="nerdctl"
@@ -704,10 +704,11 @@ COPY          --from=builder-terraform  /dist /dist
 COPY          --from=builder-nerdctl    /dist /dist
 
 # RUN           [ "$TARGETARCH" != "amd64" ] || export STACK_CLASH=true; \
+# Somehow lost stack protected in the migration
+#              export STACK_PROTECTED=true; \
 RUN           export RUNNING=true; \
               export BIND_NOW=true; \
               export PIE=true; \
-              export STACK_PROTECTED=true; \
               export FORTIFIED=true; \
               export RO_RELOCATIONS=true; \
               export NO_SYSTEM_LINK=true; \
