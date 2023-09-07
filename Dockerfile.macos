@@ -7,8 +7,8 @@ ARG           FROM_IMAGE_RUNTIME=scratch
 FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS osx-cross
 
 ARG           GIT_REPO=github.com/tpoechtrager/osxcross
-ARG           GIT_VERSION=50e86eb
-ARG           GIT_COMMIT=50e86ebca7d14372febd0af8cd098705049161b9
+ARG           GIT_VERSION=27499bc
+ARG           GIT_COMMIT=27499bce6f512bf5ed81fff81ed5db800b9c7cb7
 
 WORKDIR       /tools/osxcross
 RUN           git clone --recurse-submodules https://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
