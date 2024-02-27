@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2023-09-05
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2023-09-05
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2023-09-05
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2024-02-20
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2024-02-20
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2024-02-20
 
 ##########################################################################################################################################
 # Fetchers
@@ -14,8 +14,8 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2023-09-05
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.12.2
-ARG           GIT_COMMIT=567a99433ca23402d5e9b9f9124005d2e59b8861
+ARG           GIT_VERSION=v0.12.5
+ARG           GIT_COMMIT=bac3f2b673f3f9d33e79046008e7a38e856b3dc6
 #ARG           GIT_VERSION=354e4f6
 #ARG           GIT_COMMIT=354e4f6e6b2008a6690b1675279e6bd2e445d492
 
@@ -87,8 +87,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.25
-ARG           GIT_COMMIT=b82b9f3a0e763304a250531cb9350aa6d93723c9
+ARG           GIT_VERSION=v20.10.27
+ARG           GIT_COMMIT=12df1c1054305cd96fd0547df4ac49f41f4d6f3e
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -125,8 +125,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.5.7
-ARG           GIT_COMMIT=ee58ac1851c8a433005df9863ed47796a9f6b5e7
+ARG           GIT_VERSION=v1.7.4
+ARG           GIT_COMMIT=acf1069e83e9dc11dc59d4222cf194bf68b23572
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -205,8 +205,8 @@ ARG           GIT_REPO=github.com/caddyserver/caddy
 #ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
 #ARG           GIT_VERSION=v2.5.2
 #ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
-ARG           GIT_VERSION=v2.7.4
-ARG           GIT_COMMIT=f11c3c9f5a1be082450d64369853e1dacda22dde
+ARG           GIT_VERSION=v2.7.6
+ARG           GIT_COMMIT=6d9a83376b5e19b3c0368541ee46044ab284038b
 
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
@@ -228,8 +228,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
 
 ARG           GIT_REPO=github.com/containerd/nerdctl
-ARG           GIT_VERSION=v1.5.0
-ARG           GIT_COMMIT=b33a58f288bc42351404a016e694190b897cd252
+ARG           GIT_VERSION=v1.7.4
+ARG           GIT_COMMIT=7b5f7e0d8f705ed4e54f7040512327e231433366
 
 ENV           WITH_BUILD_SOURCE="./cmd/nerdctl"
 ENV           WITH_BUILD_OUTPUT="nerdctl"
