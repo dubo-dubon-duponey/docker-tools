@@ -45,8 +45,8 @@ RUN           --mount=type=secret,uid=100,id=CA \
                 lzma-dev=9.22-2.2 \
                 libxml2-dev=2.9.14+dfsg-1.3~deb12u1 \
                 cmake=3.25.1-1 \
-                clang=1:14.0-55.6 \
-                lld=1:14.0-55.6 \
+                clang=1:14.0-55.7~deb12u1 \
+                lld=1:14.0-55.7~deb12u1 \
                 patch=2.7.6-7 \
                 libssl-dev=3.0.11-1~deb12u2 \
                 python3=3.11.2-1+b1 && \
@@ -442,7 +442,7 @@ COPY          --from=builder-caddy /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-buildctl /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-cuelang /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-docker /dist/boot/bin /dist/boot/bin
-COPY          --from=builder-terraform /dist/boot/bin /dist/boot/bin
+#COPY          --from=builder-terraform /dist/boot/bin /dist/boot/bin
 # Private for now
 #COPY          --from=builder-dagger /dist/boot/bin /dist/boot/bin
 

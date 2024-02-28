@@ -654,7 +654,8 @@ COPY          --from=builder-caddy /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-buildctl /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-cuelang /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-docker /dist/boot/bin /dist/boot/bin
-COPY          --from=builder-terraform /dist/boot/bin /dist/boot/bin
+# Feb 2024 - broken with  /source/go.mod:278: invalid go version '1.21.5': must match format 1.23
+#COPY          --from=builder-terraform /dist/boot/bin /dist/boot/bin
 
 # COPY          --from=builder-hadolint /dist/boot/bin /dist/boot/bin
 # COPY          --from=builder-shellcheck /dist/boot/bin /dist/boot/bin
@@ -700,7 +701,7 @@ ARG           TARGETARCH
 COPY          --from=builder-buildctl   /dist /dist
 COPY          --from=builder-cuelang    /dist /dist
 COPY          --from=builder-docker     /dist /dist
-COPY          --from=builder-terraform  /dist /dist
+# COPY          --from=builder-terraform  /dist /dist
 COPY          --from=builder-nerdctl    /dist /dist
 
 # RUN           [ "$TARGETARCH" != "amd64" ] || export STACK_CLASH=true; \
