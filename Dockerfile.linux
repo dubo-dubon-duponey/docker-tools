@@ -1,8 +1,8 @@
-ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:a49ab8a07a2da61eee63b7d9d33b091df190317aefb91203ad0ac41af18d5236
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:607d8b42af53ebbeb0064a5fd41895ab34ec670a810a704dbf53a2beb3ab769d
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:3fdb7b859e3fea12a7604ff4ae7e577628784ac1f6ea0d5609de65a4b26e5b3c
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2024-03-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2024-03-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2024-03-01
 
 ##########################################################################################################################################
 # Fetchers
@@ -14,8 +14,10 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:3fdb7b8
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.9.0
-ARG           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
+ARG           GIT_VERSION=v0.13.0
+ARG           GIT_COMMIT=2afc050d57d17983f3f662d5424c2725a35c60f4
+#ARG           GIT_VERSION=354e4f6
+#ARG           GIT_COMMIT=354e4f6e6b2008a6690b1675279e6bd2e445d492
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -27,7 +29,7 @@ ENV           ENABLE_STATIC=true
 ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -51,7 +53,7 @@ ENV           ENABLE_STATIC=true
 ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -62,8 +64,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-dagger
 
 ARG           GIT_REPO=github.com/dagger/dagger
-ARG           GIT_VERSION=v0.1.0-alpha12
-ARG           GIT_COMMIT=b805d37cb0c6314d330a389134b37e554485b42b
+ARG           GIT_VERSION=v0.6.4
+ARG           GIT_COMMIT=0889c0961c764fc9fbd7cdecb67e5ba388a6ca01
 
 ENV           WITH_BUILD_SOURCE="./cmd/dagger"
 ENV           WITH_BUILD_OUTPUT="dagger"
@@ -74,7 +76,7 @@ ENV           ENABLE_STATIC=true
 ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -85,12 +87,11 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.8
-ARG           GIT_COMMIT=3967b7d28e15a020e4ee344283128ead633b3e0c
+ARG           GIT_VERSION=v20.10.27
+ARG           GIT_COMMIT=12df1c1054305cd96fd0547df4ac49f41f4d6f3e
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
-ENV           WITH_CGO_NET=true
 ENV           WITH_LDFLAGS="-X $GIT_REPO/cli/version.Version=$GIT_VERSION -X $GIT_REPO/cli/version.GitCommit=$GIT_COMMIT"
 ENV           WITH_TAGS="pkcs11"
 
@@ -113,7 +114,7 @@ ENV           GO111MODULE=off
 WORKDIR       $GOPATH/src/$GIT_REPO
 # XXX Docker PITA
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -124,8 +125,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.0.5
-ARG           GIT_COMMIT=1fc7ee138bb9f234d8bae275e7d3b8dae2fc5a4c
+ARG           GIT_VERSION=v1.7.5
+ARG           GIT_COMMIT=06a0a8c0666004bfcc7a13952de0b6f2ba27fc56
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -136,7 +137,7 @@ ENV           ENABLE_STATIC=true
 ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 
 # XXX https://github.com/hashicorp/terraform/issues/29021
 RUN           echo "replace github.com/tencentcloud/tencentcloud-sdk-go v3.0.82+incompatible => github.com/tencentcloud/tencentcloud-sdk-go v1.0.191" >> go.mod
@@ -162,7 +163,7 @@ ARG           GIT_COMMIT=05078931e52960dc287170a076e5bfb1aaca95f4
 ENV           WITH_BUILD_SOURCE="you_must_pick_what_you_want_to_build"
 ENV           WITH_BUILD_OUTPUT="you_must_pick_what_you_want_to_build"
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -176,15 +177,15 @@ ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
 # Last version with individual params
 #ARG           GIT_VERSION=19962e4
 #ARG           GIT_COMMIT=19962e48faffa5c5593860ebd7123d8ecd4bbae7
-ARG           GIT_VERSION=645d737
-ARG           GIT_COMMIT=645d737d6f299eca959dc2feb413f7c5fbcd8ce9
+ARG           GIT_VERSION=68949ef
+ARG           GIT_COMMIT=68949efecc02d76b9b7c3734d1ba72a400fe9208
 
 
 # This one has many targets, so, let downstream decide
 ENV           WITH_BUILD_SOURCE="you_must_pick_what_you_want_to_build"
 ENV           WITH_BUILD_OUTPUT="you_must_pick_what_you_want_to_build"
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -195,21 +196,54 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-caddy
 
 ARG           GIT_REPO=github.com/caddyserver/caddy
-ARG           GIT_VERSION=v2.4.4
-ARG           GIT_COMMIT=f43fd6f3884d957afc391da3ca689a43ba27eccb
+# Works until < go1.8
+#ARG           GIT_VERSION=v2.4.3
+#ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
+# 2.4.5 need tweak to scep (minor version bump), but then the build segfaults
+# 2.4.6 segfaults
+#ARG           GIT_VERSION=v2.4.6
+#ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
+#ARG           GIT_VERSION=v2.5.2
+#ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
+ARG           GIT_VERSION=v2.7.6
+ARG           GIT_COMMIT=6d9a83376b5e19b3c0368541ee46044ab284038b
+
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
 
 ENV           CGO_ENABLED=1
-ENV           ENABLE_STATIC=true
+#ENV           ENABLE_STATIC=true
 # ENV           ENABLE_PIE=true
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
 
+
+#######################
+# Fetcher: nerdctl
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
+
+ARG           GIT_REPO=github.com/containerd/nerdctl
+ARG           GIT_VERSION=v1.7.5
+ARG           GIT_COMMIT=cffed372371dcbea3dc9a646ce5a913fc1c09513
+
+ENV           WITH_BUILD_SOURCE="./cmd/nerdctl"
+ENV           WITH_BUILD_OUTPUT="nerdctl"
+ENV           WITH_LDFLAGS="-X $GIT_REPO/pkg/version.Version=$GIT_VERSION -X $GIT_REPO/pkg/version.Revision=$GIT_COMMIT"
+
+ENV           CGO_ENABLED=1
+ENV           ENABLE_STATIC=true
+ENV           ENABLE_PIE=true
+ENV           WITH_CGO_NET=true
+
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
 ##########################################################################################################################################
 # Builders linux
 ##########################################################################################################################################
@@ -228,9 +262,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -264,9 +295,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -300,9 +328,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -336,9 +361,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -372,9 +394,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -411,9 +430,6 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 ENV           WITH_BUILD_SOURCE=./cmd/http
 ENV           WITH_BUILD_OUTPUT=http-health
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -436,9 +452,6 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 ENV           WITH_BUILD_SOURCE=./cmd/rtsp
 ENV           WITH_BUILD_OUTPUT=rtsp-health
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -461,9 +474,6 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 ENV           WITH_BUILD_SOURCE=./cmd/dns
 ENV           WITH_BUILD_OUTPUT=dns-health
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -500,9 +510,6 @@ ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 ENV           WITH_BUILD_SOURCE=./cmd/client
 ENV           WITH_BUILD_OUTPUT=goello-client
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -525,9 +532,28 @@ RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
 ENV           WITH_BUILD_SOURCE=./cmd/server
 ENV           WITH_BUILD_OUTPUT=goello-server
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
+RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
+              [ "${CGO_ENABLED:-}" != 1 ] || { \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
+                export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
+                export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
+                export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+                export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
+
+ENV           WITH_BUILD_SOURCE=./cmd/server-ng
+ENV           WITH_BUILD_OUTPUT=goello-server-ng
+
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -561,9 +587,39 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
+RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
+              [ "${CGO_ENABLED:-}" != 1 ] || { \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
+                export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
+                export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
+                export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+                export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
+
+#######################
+# Nerdctl
+#######################
+FROM          --platform=$BUILDPLATFORM fetcher-nerdctl                                                                 AS builder-nerdctl
+
+ARG           TARGETARCH
+ARG           TARGETOS
+ARG           TARGETVARIANT
+ENV           GOOS=$TARGETOS
+ENV           GOARCH=$TARGETARCH
+
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -598,7 +654,8 @@ COPY          --from=builder-caddy /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-buildctl /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-cuelang /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-docker /dist/boot/bin /dist/boot/bin
-COPY          --from=builder-terraform /dist/boot/bin /dist/boot/bin
+# Feb 2024 - broken with  /source/go.mod:278: invalid go version '1.21.5': must match format 1.23
+#COPY          --from=builder-terraform /dist/boot/bin /dist/boot/bin
 
 # COPY          --from=builder-hadolint /dist/boot/bin /dist/boot/bin
 # COPY          --from=builder-shellcheck /dist/boot/bin /dist/boot/bin
@@ -644,13 +701,15 @@ ARG           TARGETARCH
 COPY          --from=builder-buildctl   /dist /dist
 COPY          --from=builder-cuelang    /dist /dist
 COPY          --from=builder-docker     /dist /dist
-COPY          --from=builder-terraform  /dist /dist
+# COPY          --from=builder-terraform  /dist /dist
+COPY          --from=builder-nerdctl    /dist /dist
 
 # RUN           [ "$TARGETARCH" != "amd64" ] || export STACK_CLASH=true; \
+# Somehow lost stack protected in the migration
+#              export STACK_PROTECTED=true; \
 RUN           export RUNNING=true; \
               export BIND_NOW=true; \
               export PIE=true; \
-              export STACK_PROTECTED=true; \
               export FORTIFIED=true; \
               export RO_RELOCATIONS=true; \
               export NO_SYSTEM_LINK=true; \

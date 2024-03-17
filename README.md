@@ -4,14 +4,15 @@ A collection of useful tools, built with CGO (where necessary) for macOS and lin
 (specifically supporting netcgo for proper mDNS resolution on mac).
 
 List:
-* terraform
 * cue
 * buildctl
-* dagger
-* docker cli
+* docker-cli
+* caddy
 * goello (client and server)
-* healtcheckers (http, dns, rtsp)
+* nerdctl (linux only)
+* healtcheckers (http, dns, rtsp) (linux only)
 
 Published as:
-* ghcr.io/dubo-dubon-duponey/tools:linux-2021-08-01
-* ghcr.io/dubo-dubon-duponey/tools:macos-2021-08-01
+* docker.io/dubodubonduponey/tools:linux-2024-03-01
+* docker.io/dubodubonduponey/tools:linux-dev-2024-03-01
+* docker.io/dubodubonduponey/tools:macos-2024-03-01

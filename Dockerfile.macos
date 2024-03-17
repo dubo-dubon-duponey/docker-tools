@@ -1,21 +1,24 @@
-ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:a49ab8a07a2da61eee63b7d9d33b091df190317aefb91203ad0ac41af18d5236
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:607d8b42af53ebbeb0064a5fd41895ab34ec670a810a704dbf53a2beb3ab769d
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2024-03-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2024-03-01
 ARG           FROM_IMAGE_RUNTIME=scratch
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS osx-cross
 
 ARG           GIT_REPO=github.com/tpoechtrager/osxcross
-ARG           GIT_VERSION=26ebac2
-ARG           GIT_COMMIT=26ebac26899650b12b99de86ebbde785de6ca173
+#ARG           GIT_VERSION=27499bc
+#ARG           GIT_COMMIT=27499bce6f512bf5ed81fff81ed5db800b9c7cb7
+ARG           GIT_VERSION=ff8d100
+ARG           GIT_COMMIT=ff8d100f3f026b4ffbe4ce96d8aac4ce06f1278b
 
 WORKDIR       /tools/osxcross
-RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
 
 
 FROM          osx-cross                                                                                                 AS builder-sdk
 
+# XXX parameterize this
 RUN           --mount=type=bind,target=/SDKs \
               ln -s /SDKs ./Packages; \
               XCODEDIR=. ./tools/gen_sdk_package.sh
@@ -40,25 +43,14 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
                 lzma-dev=9.22-2.2 \
-                libxml2-dev=2.9.10+dfsg-6.7 \
-                cmake=3.18.4-2 \
+                libxml2-dev=2.9.14+dfsg-1.3~deb12u1 \
+                cmake=3.25.1-1 \
+                clang=1:14.0-55.7~deb12u1 \
+                lld=1:14.0-55.7~deb12u1 \
                 patch=2.7.6-7 \
-                libssl-dev=1.1.1k-1 \
-                clang=1:11.0-51+nmu5 \
-                lld=1:11.0-51+nmu5 \
-                python3=3.9.2-3 && \
+                libssl-dev=3.0.11-1~deb12u2 \
+                python3=3.11.2-1+b1 && \
               rm -rf /var/lib/apt/lists/*
-
-# hadolint ignore=DL3010
-COPY          ./cache/MacOSX*.sdk.tar.xz ./tarballs
-RUN           UNATTENDED=1 ./build.sh
-
-WORKDIR       /source
-ENV           CC="o64-clang"
-ENV           CXX="o64-clang++"
-ENV           PATH="/tools/osxcross/target/bin:$PATH"
-ENV           MACOSX_DEPLOYMENT_TARGET=10.11
-ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
 
 # Unsupported by clang: -mcet -fstack-clash-protection
 ENV           WARNING_OPTIONS="-Werror=implicit-function-declaration -Werror=format-security -Wall"
@@ -72,6 +64,17 @@ ENV           LDFLAGS=""
 ENV           CFLAGS="$WARNING_OPTIONS $OPTIMIZATION_OPTIONS $DEBUGGING_OPTIONS $PREPROCESSOR_OPTIONS $COMPILER_OPTIONS"
 ENV           CXXFLAGS="$CFLAGS"
 
+# hadolint ignore=DL3010
+COPY          ./cache/MacOSX*.sdk.tar.xz ./tarballs
+RUN           SDK_VERSION=12.0 OSX_VERSION_MIN=10.13 UNATTENDED=1 ./build.sh
+
+WORKDIR       /source
+ENV           CC="o64-clang"
+ENV           CXX="o64-clang++"
+ENV           PATH="/tools/osxcross/target/bin:$PATH"
+ENV           MACOSX_DEPLOYMENT_TARGET=10.11
+ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
+
 ##########################################################################################################################################
 # Fetchers
 ##########################################################################################################################################
@@ -82,8 +85,8 @@ ENV           CXXFLAGS="$CFLAGS"
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.9.0
-ARG           GIT_COMMIT=c8bb937807d405d92be91f06ce2629e6202ac7a9
+ARG           GIT_VERSION=v0.13.0
+ARG           GIT_COMMIT=2afc050d57d17983f3f662d5424c2725a35c60f4
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -94,7 +97,7 @@ ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 ENV           WITH_LDFLAGS="-X $GIT_REPO/version.Version=$GIT_VERSION -X $GIT_REPO/version.Revision=$GIT_COMMIT -X $GIT_REPO/version.Package=$GIT_REPO"
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -117,7 +120,7 @@ ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 ENV           WITH_LDFLAGS="-X cuelang.org/go/cmd/cue/cmd.version=$GIT_VERSION"
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -128,8 +131,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-dagger
 
 ARG           GIT_REPO=github.com/dagger/dagger
-ARG           GIT_VERSION=v0.1.0-alpha12
-ARG           GIT_COMMIT=b805d37cb0c6314d330a389134b37e554485b42b
+ARG           GIT_VERSION=v0.6.4
+ARG           GIT_COMMIT=0889c0961c764fc9fbd7cdecb67e5ba388a6ca01
 
 ENV           WITH_BUILD_SOURCE="./cmd/dagger"
 ENV           WITH_BUILD_OUTPUT="dagger"
@@ -139,7 +142,7 @@ ENV           CGO_ENABLED=1
 ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -150,8 +153,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-docker-cli
 
 ARG           GIT_REPO=github.com/docker/cli
-ARG           GIT_VERSION=v20.10.8
-ARG           GIT_COMMIT=3967b7d28e15a020e4ee344283128ead633b3e0c
+ARG           GIT_VERSION=v20.10.27
+ARG           GIT_COMMIT=12df1c1054305cd96fd0547df4ac49f41f4d6f3e
 
 ENV           WITH_BUILD_SOURCE="./cmd/docker"
 ENV           WITH_BUILD_OUTPUT="docker"
@@ -176,7 +179,7 @@ ENV           GO111MODULE=off
 WORKDIR       $GOPATH/src/$GIT_REPO
 # XXX Docker PITA
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -187,8 +190,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.0.5
-ARG           GIT_COMMIT=1fc7ee138bb9f234d8bae275e7d3b8dae2fc5a4c
+ARG           GIT_VERSION=v1.7.5
+ARG           GIT_COMMIT=06a0a8c0666004bfcc7a13952de0b6f2ba27fc56
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -198,7 +201,7 @@ ENV           CGO_ENABLED=1
 ENV           ENABLE_PIE=true
 ENV           WITH_CGO_NET=true
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 
 # XXX https://github.com/hashicorp/terraform/issues/29021
 RUN           echo "replace github.com/tencentcloud/tencentcloud-sdk-go v3.0.82+incompatible => github.com/tencentcloud/tencentcloud-sdk-go v1.0.191" >> go.mod
@@ -217,15 +220,15 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-goello
 
 ARG           GIT_REPO=github.com/dubo-dubon-duponey/goello
-ARG           GIT_VERSION=645d737
-ARG           GIT_COMMIT=645d737d6f299eca959dc2feb413f7c5fbcd8ce9
+ARG           GIT_VERSION=68949ef
+ARG           GIT_COMMIT=68949efecc02d76b9b7c3734d1ba72a400fe9208
 
 # This one has many targets, so, let downstream decide
 ENV           ENABLE_PIE=true
 ENV           WITH_BUILD_SOURCE="you_must_pick_what_you_want_to_build"
 ENV           WITH_BUILD_OUTPUT="you_must_pick_what_you_want_to_build"
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -236,14 +239,29 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-caddy
 
 ARG           GIT_REPO=github.com/caddyserver/caddy
-ARG           GIT_VERSION=v2.4.4
-ARG           GIT_COMMIT=f43fd6f3884d957afc391da3ca689a43ba27eccb
+# Works until < go1.8
+#ARG           GIT_VERSION=v2.4.3
+#ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
+# 2.4.5 need tweak to scep (minor version bump), but then the build segfaults
+# 2.4.6 segfaults
+#ARG           GIT_VERSION=v2.4.6
+#ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
+#ARG           GIT_VERSION=v2.5.2
+#ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
+ARG           GIT_VERSION=v2.7.6
+ARG           GIT_COMMIT=6d9a83376b5e19b3c0368541ee46044ab284038b
 
 ENV           ENABLE_PIE=true
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+
+# scep v2.0.0 checksum does not match anymore
+# It's unclear whether the rename of the module to v2 is responsible, but one way or the other this
+# *critical* module is suspicious
+# RUN           echo "replace github.com/micromdm/scep/v2 v2.0.0 => github.com/micromdm/scep/v2 v2.1.0" >> go.mod
+
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
@@ -374,6 +392,26 @@ RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
               go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
 
 #######################
+# Goello
+#######################
+FROM          fetcher-goello                                                                                            AS builder-goello-server-ng
+
+ENV           WITH_BUILD_SOURCE=./cmd/server-ng
+ENV           WITH_BUILD_OUTPUT=goello-server-ng
+
+ENV           GOOS="darwin"
+ENV           GOARCH="amd64"
+
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
+RUN           [ "${CGO_ENABLED:-}" != 1 ] || { \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
+
+#######################
 # Caddy
 #######################
 FROM          fetcher-caddy                                                                                             AS builder-caddy
@@ -397,11 +435,12 @@ FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR      
 
 COPY          --from=builder-goello-client /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-goello-server /dist/boot/bin /dist/boot/bin
+COPY          --from=builder-goello-server-ng /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-caddy /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-buildctl /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-cuelang /dist/boot/bin /dist/boot/bin
 COPY          --from=builder-docker /dist/boot/bin /dist/boot/bin
-COPY          --from=builder-terraform /dist/boot/bin /dist/boot/bin
+#COPY          --from=builder-terraform /dist/boot/bin /dist/boot/bin
 # Private for now
 #COPY          --from=builder-dagger /dist/boot/bin /dist/boot/bin
 
