@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2024-02-20
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2024-02-20
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2024-02-20
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2024-03-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2024-03-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2024-03-01
 
 ##########################################################################################################################################
 # Fetchers
@@ -14,8 +14,8 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2024-02-20
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.12.5
-ARG           GIT_COMMIT=bac3f2b673f3f9d33e79046008e7a38e856b3dc6
+ARG           GIT_VERSION=v0.13.0
+ARG           GIT_COMMIT=2afc050d57d17983f3f662d5424c2725a35c60f4
 #ARG           GIT_VERSION=354e4f6
 #ARG           GIT_COMMIT=354e4f6e6b2008a6690b1675279e6bd2e445d492
 
