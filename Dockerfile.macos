@@ -190,8 +190,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.7.4
-ARG           GIT_COMMIT=acf1069e83e9dc11dc59d4222cf194bf68b23572
+ARG           GIT_VERSION=v1.7.5
+ARG           GIT_COMMIT=06a0a8c0666004bfcc7a13952de0b6f2ba27fc56
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"

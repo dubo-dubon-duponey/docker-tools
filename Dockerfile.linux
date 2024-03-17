@@ -125,8 +125,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-terraform
 
 ARG           GIT_REPO=github.com/hashicorp/terraform
-ARG           GIT_VERSION=v1.7.4
-ARG           GIT_COMMIT=acf1069e83e9dc11dc59d4222cf194bf68b23572
+ARG           GIT_VERSION=v1.7.5
+ARG           GIT_COMMIT=06a0a8c0666004bfcc7a13952de0b6f2ba27fc56
 
 ENV           WITH_BUILD_SOURCE="./"
 ENV           WITH_BUILD_OUTPUT="terraform"
@@ -228,8 +228,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
 
 ARG           GIT_REPO=github.com/containerd/nerdctl
-ARG           GIT_VERSION=v1.7.4
-ARG           GIT_COMMIT=7b5f7e0d8f705ed4e54f7040512327e231433366
+ARG           GIT_VERSION=v1.7.5
+ARG           GIT_COMMIT=cffed372371dcbea3dc9a646ce5a913fc1c09513
 
 ENV           WITH_BUILD_SOURCE="./cmd/nerdctl"
 ENV           WITH_BUILD_OUTPUT="nerdctl"
