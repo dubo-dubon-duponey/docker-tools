@@ -1,7 +1,7 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2024-03-01
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2024-03-01
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2025-05-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2025-05-01
 ARG           FROM_IMAGE_RUNTIME=scratch
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS osx-cross
@@ -48,7 +48,7 @@ RUN           --mount=type=secret,uid=100,id=CA \
                 clang=1:14.0-55.7~deb12u1 \
                 lld=1:14.0-55.7~deb12u1 \
                 patch=2.7.6-7 \
-                libssl-dev=3.0.11-1~deb12u2 \
+                libssl-dev=3.0.15-1~deb12u1 \
                 python3=3.11.2-1+b1 && \
               rm -rf /var/lib/apt/lists/*
 
@@ -85,8 +85,8 @@ ONBUILD ARG   GOPROXY="https://proxy.golang.org,direct"
 FROM          --platform=$BUILDPLATFORM builder-cross                                                                   AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.13.1
-ARG           GIT_COMMIT=2ae42e0c0c793d7d66b7a23424af6fd6c2f9c8f3
+ARG           GIT_VERSION=v0.22.2
+ARG           GIT_COMMIT=13cf07c97baebd3d5603feecc03f5a46ac98d2a5
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -248,8 +248,10 @@ ARG           GIT_REPO=github.com/caddyserver/caddy
 #ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
 #ARG           GIT_VERSION=v2.5.2
 #ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
-ARG           GIT_VERSION=v2.7.6
-ARG           GIT_COMMIT=6d9a83376b5e19b3c0368541ee46044ab284038b
+#ARG           GIT_VERSION=v2.7.6
+#ARG           GIT_COMMIT=6d9a83376b5e19b3c0368541ee46044ab284038b
+ARG           GIT_VERSION=v2.10.0
+ARG           GIT_COMMIT=fb22a26b1a08a2fa3b2526d1852467904ee140f6
 
 ENV           ENABLE_PIE=true
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"

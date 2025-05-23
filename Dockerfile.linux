@@ -1,8 +1,8 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2024-03-01
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2024-03-01
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2024-03-01
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2025-05-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2025-05-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2025-05-01
 
 ##########################################################################################################################################
 # Fetchers
@@ -14,8 +14,8 @@ ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2024-03-01
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-buildctl
 
 ARG           GIT_REPO=github.com/moby/buildkit
-ARG           GIT_VERSION=v0.13.1
-ARG           GIT_COMMIT=2ae42e0c0c793d7d66b7a23424af6fd6c2f9c8f3
+ARG           GIT_VERSION=v0.22.2
+ARG           GIT_COMMIT=13cf07c97baebd3d5603feecc03f5a46ac98d2a5
 
 ENV           WITH_BUILD_SOURCE="./cmd/buildctl"
 ENV           WITH_BUILD_OUTPUT="buildctl"
@@ -203,9 +203,12 @@ ARG           GIT_REPO=github.com/caddyserver/caddy
 #ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
 #ARG           GIT_VERSION=v2.5.2
 #ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
-ARG           GIT_VERSION=v2.7.6
-ARG           GIT_COMMIT=6d9a83376b5e19b3c0368541ee46044ab284038b
-
+#ARG           GIT_VERSION=v2.7.6
+#ARG           GIT_COMMIT=6d9a83376b5e19b3c0368541ee46044ab284038b
+#ARG           GIT_VERSION=v2.8.4
+#ARG           GIT_COMMIT=7088605cc11c52c2777ab613dfc5c2a9816006e4
+ARG           GIT_VERSION=v2.10.0
+ARG           GIT_COMMIT=fb22a26b1a08a2fa3b2526d1852467904ee140f6
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
@@ -226,8 +229,8 @@ RUN           --mount=type=secret,id=CA \
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-nerdctl
 
 ARG           GIT_REPO=github.com/containerd/nerdctl
-ARG           GIT_VERSION=v1.7.5
-ARG           GIT_COMMIT=cffed372371dcbea3dc9a646ce5a913fc1c09513
+ARG           GIT_VERSION=v2.1.2
+ARG           GIT_COMMIT=2a2834dd1c926528aa141726a9a9132eb1665568
 
 ENV           WITH_BUILD_SOURCE="./cmd/nerdctl"
 ENV           WITH_BUILD_OUTPUT="nerdctl"
